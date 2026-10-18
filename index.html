@@ -1,0 +1,2562 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>캐릭터 공방</title>
+<style>
+  :root {
+    --bg: #f7f5f3;
+    --surface: #ffffff;
+    --surface-2: #f1edea;
+    --text: #1f1a1c;
+    --text-2: #6b6266;
+    --border: #e3dcd8;
+    --accent: #7a1f3d;
+    --accent-text: #ffffff;
+    --accent-soft: #f5e6eb;
+    --danger: #c0392b;
+    --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+    --radius: 12px;
+    --tap: 44px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161214;
+      --surface: #211b1e;
+      --surface-2: #2b2428;
+      --text: #f2ecee;
+      --text-2: #a99ea3;
+      --border: #3a3136;
+      --accent: #d9708f;
+      --accent-text: #1a0d12;
+      --accent-soft: #3a2029;
+      --danger: #ff7b6b;
+      --shadow: none;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    -webkit-text-size-adjust: 100%;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: .45; }
+
+  /* 상단 바 */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: grid; grid-template-columns: var(--tap) 1fr var(--tap);
+    align-items: center; gap: 8px;
+    height: 56px; padding: 0 8px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { margin: 0; font-size: 17px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon-btn {
+    width: var(--tap); height: var(--tap);
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 50%; background: transparent; color: var(--text);
+  }
+  .icon-btn:hover { background: var(--surface-2); }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .icon-btn[hidden] { visibility: hidden; display: inline-flex; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  section[data-screen] { display: none; }
+  section[data-screen].active { display: block; }
+
+  /* 공통 요소 */
+  .btn {
+    min-height: var(--tap); padding: 10px 18px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); font-weight: 600;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .btn-block { display: block; width: 100%; }
+  .btn-lg { min-height: 56px; font-size: 17px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px;
+  }
+  .stack > * + * { margin-top: 12px; }
+  .label { display: block; font-weight: 700; margin-bottom: 8px; }
+  .hint { color: var(--text-2); font-size: 14px; }
+  .field {
+    width: 100%; min-height: var(--tap); padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .field:focus, .btn:focus-visible, .chip:focus-within, .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea.field { resize: vertical; line-height: 1.6; }
+
+  /* 홈 */
+  .section-title { font-size: 15px; color: var(--text-2); font-weight: 700; margin: 24px 0 10px; }
+  .project-card { position: relative; cursor: pointer; }
+  .project-card h3 { margin: 0 0 8px; padding-right: 40px; font-size: 17px; }
+  .more-btn { position: absolute; top: 6px; right: 6px; font-size: 20px; line-height: 1; }
+  .menu {
+    position: absolute; top: 48px; right: 8px; z-index: 5; min-width: 120px; padding: 4px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .15);
+  }
+  .menu button {
+    display: block; width: 100%; min-height: var(--tap); padding: 0 14px;
+    border: 0; border-radius: 8px; background: transparent; text-align: left; font-weight: 600;
+  }
+  .menu button:hover { background: var(--surface-2); }
+  .menu .danger { color: var(--danger); }
+  .empty { padding: 32px 16px; text-align: center; color: var(--text-2); }
+  .section-row { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 0; }
+  .section-row .section-title { margin: 10px 0; }
+  .home-menu-wrap { position: relative; }
+  .home-menu-wrap .menu { top: 44px; right: 0; min-width: 150px; }
+  .banner-btn { display: block; width: 100%; min-height: var(--tap); border: 0; text-align: left; }
+  .banner-btn[hidden] { display: none; }
+  .banner {
+    margin-bottom: 16px; padding: 12px 16px; border-radius: var(--radius);
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .badge {
+    display: inline-flex; align-items: center; height: 26px; padding: 0 10px;
+    border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+    font-size: 13px; font-weight: 700;
+  }
+  .pf-icons { display: inline-flex; gap: 4px; }
+  .pf-icon {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 700;
+  }
+  .date { margin-left: auto; color: var(--text-2); font-size: 13px; }
+
+  /* 입력 */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .chip span {
+    display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 16px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+    font-weight: 600; cursor: pointer; user-select: none;
+  }
+  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+  /* 설정 시트 */
+  .sheet-card h3 { margin: 0 0 8px; font-size: 15px; }
+  .sheet-card textarea { min-height: 88px; }
+  .sheet-card.suggested { border-style: dashed; border-width: 2px; border-color: var(--text-2); }
+  #sheetQuestions:not(:empty) { margin-bottom: 16px; }
+  .q-card { border-color: var(--accent); background: var(--accent-soft); }
+  .q-card .q-text { margin: 0 0 4px; font-weight: 700; }
+  .q-card .q-target { margin: 0 0 12px; }
+  .q-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .q-options .btn { flex: 1 1 auto; font-weight: 600; }
+  .q-custom { display: flex; gap: 8px; }
+  .q-custom .field { flex: 1; min-width: 0; }
+  .loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 16px; color: var(--text-2); text-align: center; }
+  .spinner {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { padding: 24px 16px; text-align: center; }
+  .error-box p { margin: 0 0 12px; color: var(--danger); font-weight: 600; }
+  .empty-box { padding: 24px 16px; text-align: center; }
+  .empty-box p { margin: 0 0 12px; color: var(--text-2); }
+
+  /* 결과 */
+  .tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border); margin: -4px 0 16px; }
+  .tab {
+    flex: 0 0 auto; min-height: var(--tap); padding: 0 18px;
+    border: 0; border-bottom: 3px solid transparent; background: transparent;
+    font-weight: 700; color: var(--text-2);
+  }
+  .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab { display: inline-flex; align-items: center; gap: 6px; }
+  .spinner-sm { width: 14px; height: 14px; border-width: 2px; }
+  .tab-err {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--danger); color: var(--surface); font-size: 12px;
+  }
+  .count.over { color: var(--danger); font-weight: 700; }
+  .item-note { margin: -4px 0 12px; font-size: 13px; }
+  .result-card.pinned { border: 2px solid var(--accent); }
+  .star { font-size: 22px; color: var(--text-2); }
+  .result-card.pinned .star { color: var(--accent); }
+  .stale-badge {
+    display: inline-flex; align-items: center; min-height: var(--tap); margin: 0 0 10px; padding: 0 14px;
+    border: 1px solid var(--accent); border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+    font-size: 14px; font-weight: 700;
+  }
+  .item-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .item-actions .btn-narrow { flex: 0 0 var(--tap); padding: 0; }
+  .dir-panel { margin-top: 12px; }
+  .dir-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .btn-chip { border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+  .badge-sm { height: 22px; padding: 0 8px; margin-right: 6px; font-size: 12px; }
+  .edit-area { min-height: 160px; resize: none; overflow: hidden; }
+  .result-card.editing { border-color: var(--accent); }
+  .lore-list { margin: 0 0 12px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .lore-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start;
+    padding: 10px 12px;
+  }
+  .lore-row + .lore-row { border-top: 1px solid var(--border); }
+  .lore-kw {
+    justify-self: start; min-height: var(--tap); padding: 0 14px; border: 0; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; text-align: left;
+  }
+  .lore-content { grid-column: 1; margin: 0; white-space: pre-wrap; }
+  .lore-copy { grid-column: 2; grid-row: 1 / span 2; align-self: center; padding: 0 12px; font-size: 14px; }
+  .item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .item-head h3 { margin: 0; font-size: 16px; }
+  .item-body { white-space: pre-wrap; margin: 0 0 12px; }
+  .item-info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--text-2); font-size: 14px; }
+  .pager { display: inline-flex; align-items: center; gap: 2px; }
+  .pager .icon-btn { width: 36px; height: var(--tap); border-radius: 8px; }
+  .item-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .item-actions .btn { flex: 1; padding: 10px 8px; }
+  .result-pad { height: 88px; }
+  .bottombar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    display: none; gap: 8px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--border);
+  }
+  .bottombar.show { display: flex; }
+  .bottombar .btn { flex: 1; padding: 10px 8px; }
+
+  /* 모달 */
+  dialog {
+    width: min(440px, calc(100vw - 32px)); padding: 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text);
+  }
+  dialog { max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+  dialog::backdrop { background: rgba(0, 0, 0, .45); }
+  /* 점검 결과: 휴대폰에서는 아래에서 올라오는 시트 */
+  @media (max-width: 600px) {
+    dialog.sheet-modal {
+      width: 100vw; max-width: 100vw; margin: auto 0 0; max-height: 85dvh;
+      border-radius: var(--radius) var(--radius) 0 0; border-bottom: 0;
+    }
+  }
+  #settingsTabs { margin: 0 0 16px; }
+  .pf-row { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .pf-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .pf-row-head strong { font-size: 14px; color: var(--text-2); }
+  .pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pf-grid .field { min-width: 0; }
+  .pf-sub { font-size: 13px; color: var(--text-2); margin: 0 0 4px; display: block; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-weight: 600; cursor: pointer; }
+  .switch input { width: 20px; height: 20px; accent-color: var(--accent); }
+  select.field { appearance: auto; }
+  .issue h3 { margin: 0 0 6px; font-size: 15px; }
+  .issue p { margin: 0 0 8px; }
+  .issue .fix { color: var(--text-2); font-size: 14px; }
+  .modal-body { padding: 20px; }
+  .modal-body h2 { margin: 0 0 16px; font-size: 18px; }
+  .pw-row { display: flex; gap: 8px; }
+  .pw-row .field { flex: 1; min-width: 0; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* 토스트 */
+  .toast {
+    position: fixed; left: 50%; bottom: 100px; z-index: 100;
+    transform: translateX(-50%) translateY(10px); opacity: 0;
+    max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: var(--radius);
+    background: var(--text); color: var(--bg); font-size: 15px;
+    transition: opacity .2s, transform .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn" id="backBtn" aria-label="뒤로가기" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <h1 id="screenTitle">캐릭터 공방</h1>
+  <button class="icon-btn" id="settingsBtn" aria-label="설정">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- 1. 홈 -->
+  <section data-screen="home">
+    <div class="banner" id="dbBanner" hidden>이 브라우저에서는 저장이 안 돼요</div>
+    <button type="button" class="banner banner-btn" id="backupBanner" hidden>백업한 지 일주일이 지났어요 · 지금 백업하기</button>
+    <button class="btn btn-primary btn-block btn-lg" id="newBtn">+ 새 캐릭터</button>
+    <div class="section-row">
+      <h2 class="section-title">내 캐릭터</h2>
+      <div class="home-menu-wrap">
+        <button type="button" class="icon-btn" id="homeMenuBtn" aria-label="백업·동기화 메뉴" aria-haspopup="menu">⋯</button>
+        <div class="menu" id="homeMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="homeSyncBtn">지금 동기화</button>
+          <button type="button" role="menuitem" id="backupBtn">전체 백업</button>
+          <button type="button" role="menuitem" id="restoreBtn">백업 불러오기</button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+    <div class="stack" id="projectList"></div>
+  </section>
+
+  <!-- 2. 입력 -->
+  <section data-screen="input">
+    <p class="banner" id="worldBanner" hidden></p>
+    <div class="stack">
+      <div>
+        <label class="label" for="rawInput">캐릭터·스토리 아이디어</label>
+        <textarea class="field" id="rawInput" rows="8" placeholder="예) 용병단을 이끄는 북부 대공. 겉으론 냉정하지만 유저에게만 집착. 유저는 몰락 귀족 영애로 계약 결혼을 하게 됨"></textarea>
+      </div>
+      <div>
+        <span class="label">장르 <span class="hint">(여러 개 선택 가능)</span></span>
+        <div class="chips" id="genreChips"></div>
+      </div>
+      <div>
+        <label class="label" for="userRole">유저 역할 <span class="hint">(선택)</span></label>
+        <input class="field" id="userRole" type="text" placeholder="예) 몰락 귀족 가문의 영애">
+      </div>
+      <div id="platformField">
+        <span class="label">플랫폼 <span class="hint">(최소 1개)</span></span>
+        <div class="chips" id="platformChecks"></div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" id="toSheetBtn" disabled>설정 정리하기</button>
+      <button class="btn btn-block" id="draftBtn" type="button">임시저장</button>
+      <p class="hint" id="draftStatus" style="margin-top:8px;text-align:center"></p>
+    </div>
+  </section>
+
+  <!-- 3. 설정 시트 -->
+  <section data-screen="sheet">
+    <div class="stack" id="sheetQuestions"></div>
+    <p class="hint" id="sheetHint" style="margin-top:0">내용을 바로 고칠 수 있어요. 점선 카드는 AI가 채운 제안이에요.</p>
+    <div class="stack" id="sheetCards"></div>
+    <button class="btn btn-primary btn-block btn-lg" id="toResultBtn" style="margin-top:16px">이 설정으로 만들기</button>
+  </section>
+
+  <!-- 4. 결과 -->
+  <section data-screen="result">
+    <div class="tabs" role="tablist" id="platformTabs"></div>
+    <div class="stack" id="resultCards"></div>
+    <button type="button" class="btn btn-block" id="checkBtn" style="margin-top:16px">설정 점검</button>
+    <div class="result-pad"></div>
+  </section>
+</main>
+
+<div class="bottombar" id="resultBar">
+  <button class="btn" id="saveProjectBtn" type="button">프로젝트 저장</button>
+  <button class="btn btn-primary" id="copyAllBtn" type="button">확정본 전체 복사</button>
+</div>
+
+<!-- 설정 모달 -->
+<dialog id="settingsModal">
+  <form method="dialog" class="modal-body" id="settingsForm">
+    <h2>설정</h2>
+    <div class="tabs" role="tablist" id="settingsTabs">
+      <button type="button" class="tab" role="tab" data-pane="key" aria-selected="true">API 키</button>
+      <button type="button" class="tab" role="tab" data-pane="profile" aria-selected="false">플랫폼 프로필</button>
+      <button type="button" class="tab" role="tab" data-pane="sync" aria-selected="false">동기화</button>
+    </div>
+    <div data-pane="key">
+      <label class="label" for="apiKeyInput">Claude API 키</label>
+      <div class="pw-row">
+        <input class="field" id="apiKeyInput" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
+        <button type="button" class="btn" id="toggleKeyBtn">보기</button>
+      </div>
+      <p class="hint">키는 이 브라우저에만 저장돼요.</p>
+    </div>
+    <div data-pane="profile" hidden>
+      <div class="chips" id="profilePlatforms"></div>
+      <p class="hint">실제 제작 화면의 칸 이름과 최대 글자 수를 넣어 주세요. 최대 글자 수를 비우면 제한 없음이에요.</p>
+      <div class="stack" id="profileForm"></div>
+      <button type="button" class="btn btn-block" id="resetProfileBtn" style="margin-top:16px">기본값으로 되돌리기</button>
+    </div>
+    <div data-pane="sync" hidden>
+      <label class="label" for="ghTokenInput">GitHub 토큰</label>
+      <input class="field" id="ghTokenInput" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_... 또는 ghp_...">
+      <p class="hint">휴대폰과 컴퓨터에 같은 토큰을 넣으면 내 GitHub의 비공개 Gist로 내용을 주고받아요. 토큰은 이 브라우저에만 저장돼요.</p>
+      <p class="hint">만드는 법: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token → Account permissions에서 Gists를 "Read and write"로 바꾸고 만들기</p>
+      <button type="button" class="btn btn-block" id="syncNowBtn">지금 동기화</button>
+      <p class="hint" id="syncStatus"></p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="cancelSettingsBtn">닫기</button>
+      <button type="submit" class="btn btn-primary">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 설정 점검 결과 시트 -->
+<dialog id="checkModal" class="sheet-modal">
+  <div class="modal-body">
+    <h2 id="checkTitle">설정 점검</h2>
+    <div class="stack" id="checkBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="closeCheckBtn">닫기</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// === 플랫폼 프로필 (제작 화면이 바뀌면 여기만 수정) ===
+// label: 결과 카드에 보일 칸 이름 / maxChars: 최대 글자 수(null = 제한 미설정) / use: 생성 여부
+const PLATFORM_PROFILES = {
+  zeta: {
+    name: '제타', short: '제',
+    fields: [
+      // 캐릭터+세계관 합계 2400자를 1600 / 800으로 나눔
+      { key: 'character', label: '캐릭터 프롬프트', maxChars: 1600, use: true },
+      { key: 'world', label: '세계관 프롬프트', maxChars: 800, use: true },
+      { key: 'opening', label: '시작 상황·첫 대사', maxChars: 1200, use: true }, // 인트로 1200자
+      { key: 'userProfile', label: '추천 유저 프로필', maxChars: null, use: true },
+      { key: 'intro', label: '소개글', maxChars: null, use: true },
+      { key: 'hashtags', label: '해시태그', maxCount: null, use: true },
+      { key: 'lorebook', label: '로어북', use: true },
+    ],
+    style: { actionMarkup: '*행동*', pov: '3인칭', structured: false, note: '짧고 선명하게, 대화 예시와 지시문(행동 묘사) 형식 활용' },
+  },
+  refin: {
+    name: '리핀', short: '리',
+    fields: [
+      // 캐릭터+세계관 합계 20,000자를 13,000 / 7,000으로 나눔
+      { key: 'character', label: '캐릭터 프롬프트', maxChars: 13000, use: true },
+      { key: 'world', label: '세계관 프롬프트', maxChars: 7000, use: true },
+      { key: 'opening', label: '시작 상황·첫 대사', maxChars: null, use: true },
+      { key: 'userProfile', label: '추천 유저 프로필', maxChars: null, use: true },
+      { key: 'intro', label: '소개글', maxChars: null, use: true },
+      { key: 'hashtags', label: '해시태그', maxCount: null, use: true },
+      { key: 'lorebook', label: '로어북', use: true },
+    ],
+    style: { actionMarkup: '*행동*', pov: '3인칭', structured: false, note: '분량이 넉넉하니 아주 디테일하게. character는 과거사와 그것이 지금 성격에 남긴 흔적, 관계 단계별 태도 변화, 감정별·상황별 반응과 예시 대사를 충분히, world는 세력 간 이해관계, 주요 장소의 감각적 묘사, 규칙과 예외, 일상과 주변 인물까지 구체적으로 쓴다. 긴 글은 주제별 문단이나 소제목으로 나눠 읽기 쉽게' },
+  },
+  crack: {
+    name: '크랙', short: '크',
+    fields: [
+      { key: 'character', label: '캐릭터 프롬프트', maxChars: 3000, use: true }, // 프롬프트 3000자
+      { key: 'world', label: '세계관 프롬프트', maxChars: null, use: true },
+      { key: 'opening', label: '시작 상황·첫 대사', maxChars: null, use: true },
+      { key: 'userProfile', label: '추천 유저 프로필', maxChars: null, use: true },
+      { key: 'intro', label: '소개글', maxChars: null, use: true },
+      { key: 'hashtags', label: '해시태그', maxCount: null, use: true },
+      { key: 'lorebook', label: '로어북', use: true },
+    ],
+    style: { actionMarkup: '*행동*', pov: '3인칭', structured: true, note: '세계관·시작 상황·전개 장치를 구조적으로' },
+  },
+};
+const PLATFORM_KEYS = ['zeta', 'refin', 'crack'];
+const LS_PROFILES = 'cw.platformProfiles';
+
+// 저장된 프로필에 없는 항목(나중에 추가된 로어북 등)은 기본값으로 채움
+function mergeProfile(saved, base) {
+  if (!saved || !Array.isArray(saved.fields)) return base;
+  const fields = base.fields.map((bf) => ({ ...bf, ...(saved.fields.find((f) => f && f.key === bf.key) || {}) }));
+  return { ...base, ...saved, name: base.name, short: base.short, fields, style: { ...base.style, ...(saved.style || {}) } };
+}
+// 사용자가 고친 프로필(localStorage)이 있으면 그것을 우선 사용
+function getPlatformProfiles() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_PROFILES) || 'null');
+    if (saved && typeof saved === 'object') {
+      const merged = {};
+      for (const k of PLATFORM_KEYS) merged[k] = mergeProfile(saved[k], PLATFORM_PROFILES[k]);
+      return merged;
+    }
+  } catch { /* 저장값이 깨졌거나 접근 불가면 기본값 */ }
+  return PLATFORM_PROFILES;
+}
+
+// === 상수 ===
+const GENRES = ['로판', '무협', '현대', '시대물', '학원', '판타지', 'SF'];
+const PLATFORMS = PLATFORM_KEYS.map((key) => ({ key, name: PLATFORM_PROFILES[key].name, short: PLATFORM_PROFILES[key].short }));
+const SCREENS = {
+  home:   { title: '캐릭터 공방', parent: null },
+  input:  { title: '새 캐릭터', parent: 'home' },
+  sheet:  { title: '설정 시트', parent: 'input' },
+  result: { title: '결과', parent: 'sheet' },
+};
+const SHEET_FIELDS = [
+  ['basic', '기본 정보'], ['looks', '외형'], ['personality', '성격·말투'], ['userRole', '유저 역할'],
+  ['world', '세계관'], ['conflict', '갈등·비밀'], ['hooks', '플롯 훅'], ['tone', '톤'],
+];
+const RESULT_FIELDS = [
+  ['character', '캐릭터 프롬프트'], ['world', '세계관 프롬프트'], ['opening', '시작 상황·첫 대사'],
+  ['userProfile', '추천 유저 프로필'], ['intro', '소개글'], ['hashtags', '해시태그'], ['lorebook', '로어북'],
+];
+// 글자 수 대신 개수로 세고, 자동 줄이기를 하지 않는 항목
+const LIST_FIELDS = new Set(['hashtags', 'lorebook']);
+// 결과 카드 제목: 프로필의 칸 이름(비어 있으면 앱 기본 이름)
+const fieldLabel = (f) => (f.label || '').trim() || Object.fromEntries(RESULT_FIELDS)[f.key];
+const LS_API_KEY = 'cw.apiKey';
+
+// === 시스템 프롬프트 (생성 품질 문제는 이 문장을 고쳐서 해결) ===
+const SHEET_SYSTEM = `너는 AI챗 캐릭터 기획 편집자다. 사용자의 자유로운 아이디어를 설정 시트로 정리한다. 아래 JSON 하나만 출력한다.
+{
+  "title": "프로젝트 제목(캐릭터 이름 또는 짧은 별칭)",
+  "basic": "이름, 나이, 성별, 직업·지위",
+  "looks": "핵심 외형 3~5개",
+  "personality": "겉과 속, 말투, 말버릇, 유저를 부르는 호칭",
+  "userRole": "유저의 신분과 캐릭터와의 관계",
+  "world": "시대, 장소, 세력, 규칙",
+  "conflict": "갈등과 비밀",
+  "hooks": "초반 사건 2~3개, 줄바꿈으로 구분",
+  "tone": "장르와 분위기 키워드",
+  "missing": [{"field": "", "question": "", "suggestions": ["", "", ""]}]
+}
+규칙:
+1. 사용자가 준 정보는 빠짐없이 반영하고 바꾸지 않는다.
+2. 이야기에 꼭 필요한데 비어 있는 것(이름, 나이, 유저 역할, 핵심 갈등)은 지어내지 말고 missing에 질문과 선택지 3개를 넣는다. 그 칸은 빈 문자열로 둔다.
+3. 그 외 빈 칸은 장르 관습에 맞게 최소한으로 채우되, 채운 칸 끝에 "(제안)"을 붙인다.
+4. 캐릭터와 유저는 성인이다. 미성년자로 설정되면 성인으로 바꾸고 conflict 끝에 "[안내] 성인으로 조정함"을 적는다.
+5. 실존 인물·기존 작품 캐릭터 이름은 쓰지 않고 특징만 남긴다.
+6. 유저의 이름은 짓지 않고, 유저 이름이 들어갈 자리는 모두 {{user}}로 표기한다. 사용자가 유저 이름을 적었어도 {{user}}로 바꿔 쓴다(규칙 1의 예외). 유저 이름은 missing으로 묻지 않는다.
+7. 사용자 메시지에 [공유 세계관]이 있으면 같은 작품에 함께 나오는 새 캐릭터다. 새 캐릭터를 그 세계 안의 인물로 만들고, 세계관의 고유명사·세력·규칙은 바꾸지 않고 그대로 쓴다(지어낸 것으로 보지 않는다). world는 빈 문자열로 두고 missing으로 묻지 않는다. [같은 세계관의 다른 캐릭터]와 이름·역할이 겹치지 않게 하고, 아이디어에 나온 다른 캐릭터와의 관계는 conflict에 적는다.`;
+
+const PLATFORM_SYSTEM = `너는 한국 AI챗 플랫폼용 캐릭터를 만드는 전문 작가다. 주어진 설정 시트와 플랫폼 프로필에 맞춰 아래 JSON 하나만 출력한다.
+{
+  "character": "캐릭터 프롬프트",
+  "world": "세계관 프롬프트",
+  "opening": "시작 상황과 캐릭터의 첫 대사",
+  "intro": "소개글",
+  "hashtags": ["", ""],
+  "lorebook": [{"keyword": "", "content": ""}]
+}
+규칙:
+1. 설정 시트에 없는 고유명사·핵심 설정을 새로 만들지 않는다. "(제안)" 표시는 결과에 넣지 않는다.
+2. maxChars가 있는 항목은 반드시 그 글자 수(공백 포함) 이하로 쓴다. use가 false인 항목은 빈 문자열.
+3. character: 성격, 말투(예시 대사 2~3줄 이상, 분량이 넉넉하면 상황별로 더), 외형, 유저와의 관계, 행동 규칙(캐릭터가 하지 않는 것 포함)을 담는다. style.structured가 true면 [이름] [성격] 같은 소제목 구조로, false면 짧은 문단으로.
+4. world: 시대·장소·세력·규칙과 유저의 위치. 캐릭터 프롬프트와 내용이 겹치지 않게.
+5. opening: 장면 묘사는 style.actionMarkup 형식(예: *행동*)과 style.pov 시점으로, 마지막은 캐릭터의 첫 대사로 끝낸다.
+6. intro: 플랫폼 목록에서 클릭을 부르는 소개글. 첫 문장에 관계의 긴장이나 갈등을 담고, 프롬프트 내용과 어긋나지 않는다. 스포일러가 되는 비밀은 암시만.
+7. hashtags: 장르·관계·캐릭터 성향 키워드 5개 (maxCount가 있으면 그 수).
+8. style.note의 지침을 따른다.
+9. 성인 캐릭터 전제, 과도한 폭력은 완곡하게.
+10. 유저 이름이 들어갈 자리는 모든 항목에서 {{user}}로 표기한다(예: "{{user}}의 손목을 붙잡는다", "{{user}}, 늦었군."). 유저 이름을 새로 짓지 않는다. 설정에 있는 호칭(예: 부인)은 대사에서 그대로 써도 된다.
+11. lorebook: 세계관 중 대화 상황에 따라 불러올 설정 5~10개. keyword는 대화에 실제 등장할 단어(인물명, 장소, 세력, 사건)로 쓰고, content는 그 키워드가 나왔을 때 참고할 설정을 1~3문장으로 쓴다. 설정 시트의 세력·장소는 빠짐없이 keyword로 넣는다. use가 false면 빈 배열.
+12. userProfile: 유저가 이 캐릭터와 대화할 때 플랫폼의 유저 프로필(페르소나) 칸에 붙여 넣을 추천 설정. 전체 생성 JSON에는 넣지 않고, 캐릭터 프롬프트가 완성된 뒤 따로 요청받아 쓴다. 완성된 캐릭터 프롬프트와 설정 시트의 유저 역할을 바탕으로 유저의 신분, 나이대, 외형 2~3개, 성격, 캐릭터와의 관계·사연을 짧은 문단으로 쓰고, 캐릭터와의 갈등이 살아나는 방향으로 다듬는다. 이름 자리는 {{user}}로 쓰고 새 이름을 짓지 않는다. 캐릭터 프롬프트·세계관과 모순되지 않게 한다.
+13. character와 world에는 추천 유저 프로필의 내용을 반영하지 않는다. 유저에 관한 내용은 설정 시트의 유저 역할만 근거로 쓴다.
+14. 분량: 사용자 메시지의 [분량 목표]에 적힌 항목별 글자 수 범위(공백 포함)에 맞춘다. 목표가 길수록 자세하고 풍부하게 쓴다. character는 과거사, 가치관, 겉과 속의 차이, 관계가 깊어질 때의 태도 변화, 상황별 반응, 예시 대사를 늘리고, world는 세력 관계, 규칙과 그 예외, 장소 묘사, 일상의 디테일을 늘린다. 설정 시트에서 자연스럽게 이어지는 범위에서만 살을 붙이고(규칙 1), 같은 말 반복이나 군더더기로 분량을 채우지 않는다. 목표가 짧으면 핵심만 압축한다.
+15. 사용자 메시지에 [공유 세계관]이 있으면 한 작품에 여러 캐릭터가 나오는 구성이고, 세계관 프롬프트는 이미 있으므로 world는 쓰지 않는다. [공유 세계관]과 [같은 세계관의 다른 캐릭터]의 내용은 설정 시트에 있는 것으로 보고(규칙 1), 그 고유명사·세력·규칙을 바꾸지 않는다. character에는 세계관 설명을 되풀이하지 말고, 다른 캐릭터와의 관계(호칭, 감정, 얽힌 사건)를 담으며 이름·역할·말투가 겹치지 않게 한다. lorebook은 이 캐릭터와 관련된 인물·장소·사건 위주로 쓴다.`;
+
+// 항목 하나 "새 버전": PLATFORM_SYSTEM의 규칙 전체를 그대로 포함하고 추가 규칙을 붙임
+const REGEN_SYSTEM = `너는 한국 AI챗 플랫폼용 캐릭터를 만드는 전문 작가다. 주어진 설정 시트와 플랫폼 프로필에 맞춰 요청된 항목 하나를 새로 쓴다.
+규칙:
+${PLATFORM_SYSTEM.split('규칙:\n')[1]}
+16. 요청된 항목 하나만 {"text": "..."} JSON으로 출력한다(lorebook이면 {"lorebook": [{"keyword": "", "content": ""}]}). 이전 버전들과 표현·구성·첫 문장이 확실히 다르게 쓴다. 방향 지시가 있으면 최우선으로 따른다. 다른 항목과 설정이 모순되지 않게 한다.`;
+
+// 설정 점검(일관성): 한 플랫폼 결과 5개 + 설정 시트의 모순만 찾음
+const CHECK_SYSTEM = `너는 AI챗 캐릭터 설정 검수자다. 설정 시트와 한 플랫폼용 결과 항목들을 비교해 서로 모순되는 곳을 찾는다. 아래 JSON 하나만 출력한다.
+{"issues": [{"field": "", "problem": "", "fix": ""}]}
+규칙:
+1. 이름·나이·호칭·관계·세계관 규칙의 충돌만 지적한다. 문체·표현·분량 같은 취향은 지적하지 않는다.
+2. field는 고쳐야 할 결과 항목의 키(character, world, opening, userProfile, intro, hashtags, lorebook 중 하나)로 쓴다. 설정 시트가 기준이다.
+3. problem은 무엇과 무엇이 어긋나는지 한 문장, fix는 그 항목을 다시 쓸 때 줄 방향 지시 한 문장으로 쓴다.
+4. {{user}}는 유저 이름 자리 표시이므로 모순이 아니다.
+5. 모순이 없으면 issues는 빈 배열로 둔다.`;
+
+// maxChars 초과 시 자동 줄이기 1회에 쓰는 프롬프트
+const SHORTEN_SYSTEM = `너는 한국 AI챗 플랫폼용 캐릭터 글을 다듬는 편집자다. 받은 글을 요청한 글자 수(공백 포함) 이하로 줄여 {"text": "..."} JSON 하나만 출력한다. 내용과 말투, 지시문 표기(*행동* 등)와 줄바꿈 형식은 유지하고, 새 설정을 만들지 않는다.`;
+const shortenRequest = (maxChars, text) => `이 글을 ${maxChars}자 이하로 줄여 줘. 내용과 말투는 유지\n\n[글]\n${text}`;
+
+// === 상태 ===
+const state = {
+  project: null,      // 현재 작업 중인 프로젝트 (설정 시트 편집은 이 객체를 직접 고침)
+  sheetLoading: null, // 설정 시트를 만드는 중인 프로젝트 id
+  sheetError: null,   // { id, message }
+  genres: new Set(),
+  platforms: new Set(),
+  activeTab: null,
+  worldFrom: null,    // 입력 중인 캐릭터가 세계관을 함께 쓰는 원본 프로젝트 id
+};
+
+// === 유틸 ===
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, attrs = {}, children = []) => {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+    else if (v === true) node.setAttribute(k, '');
+    else if (v !== false && v != null) node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) node.append(c);
+  return node;
+};
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); return true; } catch { return false; }
+}
+const platformName = (key) => PLATFORMS.find((p) => p.key === key).name;
+function newId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+function formatDate(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
+}
+
+// === 저장소 (IndexedDB) ===
+// projects: { id, title, rawInput, genres[], userRole, platforms[], sheet, updatedAt, worldFrom? }
+//   worldFrom: 리핀 세계관을 함께 쓰는 원본 프로젝트 id (원본은 없음)
+// versions: { id, projectId, platform, field, text, chars, instruction, source("ai"|"manual"), pinned, createdAt }
+const DB_NAME = 'character-workshop';
+const DB_VERSION = 1;
+const reqP = (req) => new Promise((resolve, reject) => {
+  req.onsuccess = () => resolve(req.result);
+  req.onerror = () => reject(req.error);
+});
+const txDone = (tx) => new Promise((resolve, reject) => {
+  tx.oncomplete = () => resolve();
+  tx.onerror = () => reject(tx.error);
+  tx.onabort = () => reject(tx.error || new Error('transaction aborted'));
+});
+const db = {
+  conn: null,
+  available: false,
+  async open() {
+    if (!('indexedDB' in window)) throw new Error('IndexedDB 없음');
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains('projects')) d.createObjectStore('projects', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('versions')) {
+        const vs = d.createObjectStore('versions', { keyPath: 'id' });
+        vs.createIndex('byProjectPlatformField', ['projectId', 'platform', 'field']);
+      }
+    };
+    this.conn = await reqP(req);
+    this.available = true;
+  },
+  store(name, mode = 'readonly') {
+    if (!this.conn) throw new Error('저장소가 열리지 않았어요');
+    return this.conn.transaction(name, mode).objectStore(name);
+  },
+  put(store, obj) { return reqP(this.store(store, 'readwrite').put(obj)); },
+  get(store, id) { return reqP(this.store(store).get(id)); },
+  all(store) { return reqP(this.store(store).getAll()); },
+  // key는 [projectId, platform, field] 배열 또는 IDBKeyRange
+  byIndex(store, index, key) { return reqP(this.store(store).index(index).getAll(key)); },
+  delete(store, id) { return reqP(this.store(store, 'readwrite').delete(id)); },
+  // 프로젝트와 그 프로젝트의 versions를 한 트랜잭션으로 삭제
+  async deleteProject(id) {
+    const tx = this.conn.transaction(['projects', 'versions'], 'readwrite');
+    tx.objectStore('projects').delete(id);
+    // [id] ~ [id, []] : 배열이 문자열보다 뒤에 정렬되므로 projectId가 id인 키 전부
+    const range = IDBKeyRange.bound([id], [id, []]);
+    const idx = tx.objectStore('versions').index('byProjectPlatformField');
+    idx.openKeyCursor(range).onsuccess = (e) => {
+      const cur = e.target.result;
+      if (!cur) return;
+      tx.objectStore('versions').delete(cur.primaryKey);
+      cur.continue();
+    };
+    return txDone(tx);
+  },
+};
+
+// 저장 실패해도 화면 작업은 이어가도록 결과만 돌려줌
+async function persistProject(p) {
+  if (!db.available) return false;
+  try { await db.put('projects', p); return true; } catch { return false; }
+}
+async function getProject(id) {
+  if (!db.available) return null;
+  try { return (await db.get('projects', id)) || null; } catch { return null; }
+}
+
+// === 같은 세계관 캐릭터 (리핀 전용) ===
+// 원본 프로젝트 하나에 여러 캐릭터가 worldFrom으로 묶이고, 리핀 세계관 프롬프트는 원본 것을 함께 씀
+const SHARED_PLATFORM = 'refin';
+const worldRootId = (p) => p.worldFrom || p.id;
+const isSharedWorld = (p, platformKey, fieldKey) => !!p.worldFrom && platformKey === SHARED_PLATFORM && fieldKey === 'world';
+// 그 항목의 버전을 가진 프로젝트 id
+const versionOwner = (p, platformKey, fieldKey) => (isSharedWorld(p, platformKey, fieldKey) ? p.worldFrom : p.id);
+
+// 원본 + 원본을 가리키는 캐릭터들
+async function worldGroup(rootId) {
+  if (!db.available) return [];
+  try { return (await db.all('projects')).filter((x) => x.id === rootId || x.worldFrom === rootId); } catch { return []; }
+}
+const oneLine = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+// 생성 요청에 붙이는 [공유 세계관]·[같은 세계관의 다른 캐릭터]. 묶인 캐릭터가 아니면 빈 문자열
+// brief: 설정 시트용. 긴 세계관 프롬프트 대신 원본 설정 시트의 세계관 카드만 보냄
+async function sharedWorldBlock(p, brief = false) {
+  if (!p.worldFrom) return '';
+  const group = await worldGroup(p.worldFrom);
+  const root = group.find((x) => x.id === p.worldFrom);
+  const sheetWorld = root && root.sheet ? root.sheet.world : '';
+  const v = brief ? null : preferredVersion(await loadItemVersions(p.worldFrom, SHARED_PLATFORM, 'world'));
+  const world = v ? v.text : sheetWorld;
+  const cast = group.filter((x) => x.id !== p.id && x.sheet).map((x) =>
+    `- ${x.title}: ${oneLine(x.sheet.basic)} / 성격·말투: ${oneLine(x.sheet.personality)}${x.sheet.conflict ? ` / 갈등·비밀: ${oneLine(x.sheet.conflict)}` : ''}`);
+  return ['[공유 세계관]', world.trim() || '(비어 있음)', '', '[같은 세계관의 다른 캐릭터]', cast.join('\n') || '(없음)'].join('\n');
+}
+
+// === Claude API ===
+const API_URL = 'https://api.anthropic.com/v1/messages';
+// message가 그대로 사용자에게 보여도 되는 오류
+class UserError extends Error {}
+const userMessage = (e) => (e instanceof UserError ? e.message : '생성에 실패했어요');
+
+// 응답 텍스트에서 JSON만 꺼냄. 실패하면 undefined
+function extractJson(text) {
+  const s = text.replace(/```(?:json)?/gi, '').trim();
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start < 0 || end <= start) return undefined;
+  try { return JSON.parse(s.slice(start, end + 1)); } catch { return undefined; }
+}
+
+async function callClaude({ model, system, messages, maxTokens }) {
+  const apiKey = lsGet(LS_API_KEY);
+  if (!apiKey) throw new UserError('API 키를 확인해 주세요');
+  const headers = {
+    'x-api-key': apiKey,
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true',
+    'content-type': 'application/json',
+  };
+  const body = { model, system, messages, max_tokens: maxTokens };
+  // sonnet은 안전 분류기가 거절하면 서버에서 대체 모델로 다시 생성
+  if (model === 'claude-sonnet-5-5') {
+    headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+    body.fallbacks = 'default';
+  }
+  // 파싱 실패 시 1회 자동 재시도
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res;
+    try {
+      res = await fetch(API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new UserError('생성에 실패했어요 (네트워크 연결이 끊겼어요)');
+    }
+    if (res.status === 401) throw new UserError('API 키를 확인해 주세요');
+    if (res.status === 429) throw new UserError('잠시 후 다시 시도해 주세요');
+    if (!res.ok) {
+      // 원인 확인용: 상태 코드와 API 오류 문구만 남김(키는 남기지 않음)
+      const err = await res.json().catch(() => null);
+      console.warn('Claude API 오류', res.status, err && err.error ? err.error.message : '');
+      throw new UserError(res.status >= 500
+        ? '생성에 실패했어요 (서버가 바빠요. 잠시 후 다시 시도해 주세요)'
+        : `생성에 실패했어요 (요청 오류 ${res.status})`);
+    }
+    let data;
+    try { data = await res.json(); } catch { continue; }
+    if (data.stop_reason === 'refusal') throw new UserError('생성에 실패했어요 (내용이 거절됐어요)');
+    // 사고(thinking) 블록은 건너뛰고 text 블록만 사용
+    const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+    const parsed = extractJson(text);
+    if (parsed && typeof parsed === 'object') return parsed;
+    // 길이 상한에 걸려 잘린 응답은 같은 요청을 다시 보내도 또 잘림
+    if (data.stop_reason === 'max_tokens') throw new UserError('생성에 실패했어요 (응답이 길어서 중간에 끊겼어요)');
+  }
+  throw new UserError('생성에 실패했어요 (응답 형식이 맞지 않아요)');
+}
+
+// === 설정 시트 생성 ===
+const SHEET_KEYS = ['title', ...SHEET_FIELDS.map(([k]) => k)];
+function normalizeSheet(raw) {
+  if (!raw || Array.isArray(raw)) throw new UserError('생성에 실패했어요');
+  const sheet = {};
+  for (const k of SHEET_KEYS) {
+    const v = raw[k];
+    sheet[k] = typeof v === 'string' ? v : Array.isArray(v) ? v.join('\n') : v == null ? '' : String(v);
+  }
+  sheet.missing = (Array.isArray(raw.missing) ? raw.missing : [])
+    .filter((m) => m && typeof m.question === 'string' && m.question.trim())
+    .map((m) => ({
+      field: String(m.field || ''),
+      question: m.question.trim(),
+      suggestions: (Array.isArray(m.suggestions) ? m.suggestions : [])
+        .map((x) => String(x).trim()).filter(Boolean).slice(0, 3),
+    }));
+  return sheet;
+}
+
+async function buildSheet(project) {
+  const content = [
+    '[아이디어]',
+    project.rawInput.trim() || '(비어 있음)',
+    '',
+    '[장르]',
+    project.genres.length ? project.genres.join(', ') : '(선택 안 함)',
+    '',
+    '[유저 역할]',
+    project.userRole || '(입력 안 함)',
+  ].join('\n');
+  const shared = await sharedWorldBlock(project, true);
+  const raw = await callClaude({
+    model: 'claude-haiku-5-5',
+    system: SHEET_SYSTEM,
+    messages: [{ role: 'user', content: shared ? `${content}\n\n${shared}` : content }],
+    maxTokens: 8000,
+  });
+  const sheet = normalizeSheet(raw);
+  // 세계관 카드는 원본 설정 시트의 것을 그대로
+  if (shared) {
+    const root = await getProject(project.worldFrom);
+    if (root && root.sheet) sheet.world = root.sheet.world;
+  }
+  return sheet;
+}
+
+// === 버전 저장 ===
+const memVersions = []; // IndexedDB에 못 넣은 버전(화면 표시용)
+const charCount = (text) => Array.from(text).length; // 공백 포함
+const itemRange = (projectId, platform) => IDBKeyRange.bound([projectId, platform], [projectId, platform, []]);
+const projectRange = (projectId) => IDBKeyRange.bound([projectId], [projectId, []]);
+
+async function saveVersion(v) {
+  if (db.available) {
+    try { await db.put('versions', v); return true; } catch { /* 아래 메모리로 */ }
+  }
+  memVersions.push(v);
+  return false;
+}
+// 한 항목(프로젝트 × 플랫폼 × field)의 버전, 오래된 순
+async function loadItemVersions(projectId, platform, field) {
+  let list = [];
+  if (db.available) {
+    try { list = await db.byIndex('versions', 'byProjectPlatformField', [projectId, platform, field]); } catch { /* 빈 목록 */ }
+  }
+  list = list.concat(memVersions.filter((v) => v.projectId === projectId && v.platform === platform && v.field === field));
+  return list.sort((a, b) => a.createdAt - b.createdAt);
+}
+async function countVersions(range, match) {
+  if (memVersions.some(match)) return 1;
+  if (!db.available) return 0;
+  try { return await reqP(db.store('versions').index('byProjectPlatformField').count(range)); } catch { return 0; }
+}
+const hasPlatformVersions = (projectId, platform) =>
+  countVersions(itemRange(projectId, platform), (v) => v.projectId === projectId && v.platform === platform).then((n) => n > 0);
+const hasProjectVersions = (projectId) =>
+  countVersions(projectRange(projectId), (v) => v.projectId === projectId).then((n) => n > 0);
+
+async function updateVersion(v) {
+  if (memVersions.includes(v) || !db.available) return; // 메모리 버전은 객체를 직접 고쳤으므로 끝
+  try { await db.put('versions', v); } catch { /* 저장에 실패해도 화면은 유지 */ }
+}
+async function removeVersion(v) {
+  const i = memVersions.indexOf(v);
+  if (i >= 0) { memVersions.splice(i, 1); return; }
+  if (db.available) { try { await db.delete('versions', v.id); } catch { /* 무시 */ } }
+}
+// 미확정 버전은 항목당 최근 MAX_UNPINNED개만 남김 (확정본은 삭제 안 함)
+const MAX_UNPINNED = 10;
+async function pruneItem(projectId, platform, field) {
+  const unpinned = (await loadItemVersions(projectId, platform, field)).filter((v) => !v.pinned);
+  for (const v of unpinned.slice(0, Math.max(0, unpinned.length - MAX_UNPINNED))) await removeVersion(v);
+}
+// 확정본이 있으면 확정본, 없으면 최신본
+const preferredVersion = (list) => list.find((v) => v.pinned) || list[list.length - 1];
+
+function makeVersion(projectId, platform, field, text, instruction, createdAt, source = 'ai') {
+  return {
+    id: newId(), projectId, platform, field, text,
+    chars: charCount(text), instruction, source, pinned: false, createdAt,
+  };
+}
+
+// === 플랫폼별 생성 ===
+function sheetForPrompt(sheet) {
+  return [['title', '제목'], ...SHEET_FIELDS]
+    .map(([k, label]) => `[${label}]\n${(sheet[k] || '').trim() || '(비어 있음)'}`)
+    .join('\n\n');
+}
+function profileForPrompt(profile) {
+  return {
+    platform: profile.name,
+    fields: profile.fields.map((f) => (f.key === 'hashtags'
+      ? { key: f.key, label: f.label, maxCount: f.maxCount, use: f.use }
+      : f.key === 'lorebook'
+        ? { key: f.key, label: f.label, use: f.use }
+        : { key: f.key, label: f.label, maxChars: f.maxChars, use: f.use })),
+    style: profile.style,
+  };
+}
+function hashtagText(value, maxCount) {
+  const raw = Array.isArray(value) ? value : String(value || '').split(/[\s,]+/);
+  let tags = raw.map((t) => String(t).replace(/#/g, '').replace(/\s+/g, '')).filter(Boolean);
+  if (maxCount) tags = tags.slice(0, maxCount);
+  return tags.map((t) => '#' + t).join(' ');
+}
+
+// 로어북은 [{keyword, content}] 배열을 JSON 문자열로 versions.text에 저장
+function parseLorebook(value) {
+  let arr = value;
+  if (typeof arr === 'string') {
+    try { arr = JSON.parse(arr); } catch { arr = null; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((e) => ({ keyword: String((e && e.keyword) || '').trim(), content: String((e && e.content) || '').trim() }))
+    .filter((e) => e.keyword && e.content);
+}
+// 직접 편집용 "키워드: 내용" 한 줄씩 → 배열
+function parseLorebookLines(text) {
+  return text.split('\n').map((line) => {
+    const i = line.indexOf(':');
+    return i < 0 ? null : { keyword: line.slice(0, i).trim(), content: line.slice(i + 1).trim() };
+  }).filter((e) => e && e.keyword && e.content);
+}
+const lorebookLines = (entries) => entries.map((e) => `${e.keyword}: ${e.content}`).join('\n');
+// 복사·프롬프트·점검에 쓰는 사람이 읽는 형태
+const plainText = (fieldKey, text) => (fieldKey === 'lorebook' ? lorebookLines(parseLorebook(text)) : text);
+
+// 모델 응답 값 → versions.text
+function toVersionText(field, value) {
+  if (field.key === 'hashtags') return hashtagText(value, field.maxCount);
+  if (field.key === 'lorebook') {
+    const entries = parseLorebook(value);
+    return entries.length ? JSON.stringify(entries) : '';
+  }
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+// maxChars를 넘으면 1회 줄이기. 실패하면 null
+async function shortenText(text, maxChars) {
+  try {
+    const raw = await callClaude({
+      model: 'claude-sonnet-5-5',
+      system: SHORTEN_SYSTEM,
+      messages: [{ role: 'user', content: shortenRequest(maxChars, text) }],
+      maxTokens: tokensFor(maxChars),
+    });
+    return typeof raw.text === 'string' && raw.text.trim() ? raw.text.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+// 항목별 분량 목표: 한도의 75~90%를 채우되 너무 길면 cap에서 멈춤. 한도가 없으면 base
+const LENGTH_PLAN = {
+  character: { base: 1500, cap: 12000 },
+  world: { base: 1000, cap: 6500 },
+  opening: { base: 500, cap: 1500 },
+  userProfile: { base: 400, cap: 1000 },
+  intro: { base: 300, cap: 800 },
+};
+function lengthTarget(field) {
+  const plan = LENGTH_PLAN[field.key];
+  if (!plan) return null;
+  const max = field.maxChars ? Math.min(Math.floor(field.maxChars * 0.9), plan.cap) : plan.base;
+  return { min: Math.floor(max * 0.75), max };
+}
+function lengthLine(field) {
+  if (field.key === 'hashtags') return field.maxCount ? `최대 ${field.maxCount}개` : '개수 제한 없음';
+  if (field.key === 'lorebook') return '5~10개';
+  const t = lengthTarget(field);
+  return `${t.min}~${t.max}자${field.maxChars ? ` (한도 ${field.maxChars}자)` : ' (한도 없음)'}`;
+}
+const lengthBlock = (fields) => ['[분량 목표] (공백 포함 글자 수)', ...fields.map((f) => `- ${f.key}: ${lengthLine(f)}`)].join('\n');
+// 목표 글자 수 합 → max_tokens (한국어는 글자당 토큰이 많고, 사고(thinking) 토큰도 여기서 빠지므로 넉넉히)
+const tokensFor = (chars) => Math.min(48000, Math.max(8000, chars * 2 + 8000));
+const targetChars = (fields) => fields.reduce((sum, f) => sum + (lengthTarget(f)?.max ?? 1000), 0);
+
+// 플랫폼 하나의 항목들을 생성해 v1로 저장. 초과 항목은 줄인 v2까지 저장
+// 추천 유저 프로필은 캐릭터 프롬프트가 저장된 뒤 따로 생성
+async function generatePlatform(project, platformKey) {
+  const fullProfile = getPlatformProfiles()[platformKey];
+  // 같은 세계관 캐릭터는 세계관 프롬프트를 원본 것으로 쓰므로 만들지 않음
+  const profile = { ...fullProfile, fields: fullProfile.fields.filter((f) => f.key !== 'userProfile' && !isSharedWorld(project, platformKey, f.key)) };
+  const fields = profile.fields.filter((f) => f.use);
+  const shared = platformKey === SHARED_PLATFORM ? await sharedWorldBlock(project) : '';
+  const content = [
+    '[설정 시트]',
+    sheetForPrompt(project.sheet),
+    '',
+    ...(shared ? [shared, ''] : []),
+    '[플랫폼 프로필]',
+    JSON.stringify(profileForPrompt(profile), null, 2),
+    '',
+    lengthBlock(fields),
+  ].join('\n');
+  const raw = await callClaude({
+    model: 'claude-sonnet-5-5',
+    system: PLATFORM_SYSTEM,
+    messages: [{ role: 'user', content }],
+    maxTokens: tokensFor(targetChars(fields)),
+  });
+
+  const texts = fields.map((f) => toVersionText(f, raw[f.key]));
+  if (!texts.some(Boolean)) throw new UserError('생성에 실패했어요');
+
+  const now = Date.now();
+  await Promise.all(fields.map(async (f, i) => {
+    if (f.key === 'lorebook' && !texts[i]) return; // 빈 로어북은 저장하지 않음(카드에서 따로 만들기)
+    const v1 = makeVersion(project.id, platformKey, f.key, texts[i], '', now);
+    await saveVersion(v1);
+    if (LIST_FIELDS.has(f.key) || !f.maxChars || v1.chars <= f.maxChars) return;
+    const short = await shortenText(v1.text, f.maxChars);
+    if (short) {
+      await saveVersion(makeVersion(project.id, platformKey, f.key, short, `${f.maxChars}자 이하로 줄이기`, Math.max(Date.now(), now + 1)));
+    }
+  }));
+
+  if (fullProfile.fields.some((f) => f.key === 'userProfile' && f.use)) {
+    try {
+      await generateItemVersion(project, platformKey, 'userProfile', '');
+    } catch {
+      // 실패하면 카드에서 따로 만들기
+    }
+  }
+}
+
+// 항목 하나만 다시 생성해 다음 번호 버전으로 저장. 보여 줄 버전을 돌려줌
+async function generateItemVersion(project, platformKey, fieldKey, instruction) {
+  const profile = getPlatformProfiles()[platformKey];
+  const field = profile.fields.find((f) => f.key === fieldKey);
+  const labels = Object.fromEntries(RESULT_FIELDS);
+  // 캐릭터·세계관 프롬프트에는 추천 유저 프로필을 보여 주지 않음
+  const hidden = new Set([fieldKey, ...(fieldKey === 'character' || fieldKey === 'world' ? ['userProfile'] : [])]);
+  // 같은 세계관 캐릭터는 세계관을 [공유 세계관]으로 따로 보냄
+  const shared = platformKey === SHARED_PLATFORM ? await sharedWorldBlock(project) : '';
+  if (shared) hidden.add('world');
+  const others = await Promise.all(profile.fields
+    .filter((f) => f.use && !hidden.has(f.key))
+    .map(async (f) => {
+      const v = preferredVersion(await loadItemVersions(project.id, platformKey, f.key));
+      return v ? `[${labels[f.key]}]\n${plainText(f.key, v.text)}` : '';
+    }));
+  const history = await loadItemVersions(project.id, platformKey, fieldKey);
+  const recent = history.slice(-3).reverse();
+
+  const content = [
+    '[설정 시트]',
+    sheetForPrompt(project.sheet),
+    '',
+    ...(shared ? [shared, ''] : []),
+    '[플랫폼 프로필]',
+    JSON.stringify(profileForPrompt(profile), null, 2),
+    '',
+    '[같은 플랫폼의 다른 항목]',
+    others.filter(Boolean).join('\n\n') || '(없음)',
+    '',
+    `[다시 쓸 항목] ${fieldKey} (${labels[fieldKey]})`,
+    '',
+    lengthBlock([field]),
+    '',
+    '[이 항목의 이전 버전 (최신순)]',
+    recent.map((v, i) => `--- 이전 버전 ${i + 1} ---\n${plainText(fieldKey, v.text)}`).join('\n\n') || '(없음)',
+    '',
+    '[방향 지시]',
+    instruction || '(없음)',
+  ].join('\n');
+
+  const raw = await callClaude({
+    model: 'claude-sonnet-5-5',
+    system: REGEN_SYSTEM,
+    messages: [{ role: 'user', content }],
+    maxTokens: tokensFor(targetChars([field])),
+  });
+  const text = toVersionText(field, fieldKey === 'lorebook' ? (raw.lorebook ?? raw.text) : raw.text);
+  if (!text) throw new UserError('생성에 실패했어요');
+
+  const last = history.length ? history[history.length - 1].createdAt : 0;
+  let shown = makeVersion(project.id, platformKey, fieldKey, text, instruction, Math.max(Date.now(), last + 1));
+  await saveVersion(shown);
+  if (!LIST_FIELDS.has(fieldKey) && field.maxChars && shown.chars > field.maxChars) {
+    const short = await shortenText(text, field.maxChars);
+    if (short) {
+      const note = `${instruction ? instruction + ' · ' : ''}${field.maxChars}자 이하로 줄이기`;
+      shown = makeVersion(project.id, platformKey, fieldKey, short, note, Math.max(Date.now(), shown.createdAt + 1));
+      await saveVersion(shown);
+    }
+  }
+  await pruneItem(project.id, platformKey, fieldKey);
+  return shown;
+}
+
+// === 화면 전환 ===
+function currentScreen() {
+  const name = location.hash.slice(1);
+  return SCREENS[name] ? name : 'home';
+}
+function showScreen() {
+  const name = currentScreen();
+  document.querySelectorAll('section[data-screen]').forEach((s) => {
+    s.classList.toggle('active', s.dataset.screen === name);
+  });
+  $('#screenTitle').textContent = SCREENS[name].title;
+  $('#backBtn').hidden = !SCREENS[name].parent;
+  $('#resultBar').classList.toggle('show', name === 'result');
+  if (name === 'home') { renderHome(); autoSync(); }
+  if (name === 'sheet') renderSheetScreen();
+  if (name === 'result') renderResult();
+  window.scrollTo(0, 0);
+}
+// 이미 그 화면이면 hashchange가 안 나므로 직접 다시 그림
+function go(name) {
+  if (currentScreen() === name && location.hash === '#' + name) showScreen();
+  else location.hash = name;
+}
+
+// === 1. 홈 ===
+async function renderHome() {
+  const list = $('#projectList');
+  if (!db.available) {
+    list.replaceChildren(el('p', { class: 'empty', text: '저장된 캐릭터를 불러올 수 없어요' }));
+    return;
+  }
+  let projects;
+  try {
+    projects = await db.all('projects');
+  } catch {
+    list.replaceChildren(el('p', { class: 'empty', text: '저장된 캐릭터를 불러오지 못했어요' }));
+    return;
+  }
+  renderBackupBanner(projects.length);
+  if (!projects.length) {
+    list.replaceChildren(el('p', { class: 'empty', text: '아직 만든 캐릭터가 없어요' }));
+    return;
+  }
+  // 같은 세계관 캐릭터는 묶음의 최근 수정 순으로 모아서, 원본을 맨 앞에
+  const byId = new Map(projects.map((p) => [p.id, p]));
+  const rootOf = (p) => (byId.has(p.worldFrom) ? p.worldFrom : p.id);
+  const groupTime = new Map();
+  for (const p of projects) groupTime.set(rootOf(p), Math.max(groupTime.get(rootOf(p)) || 0, p.updatedAt));
+  const groupSize = (id) => projects.filter((x) => rootOf(x) === id).length;
+  projects.sort((a, b) => groupTime.get(rootOf(b)) - groupTime.get(rootOf(a))
+    || rootOf(a).localeCompare(rootOf(b))
+    || (a.id === rootOf(a) ? -1 : b.id === rootOf(b) ? 1 : b.updatedAt - a.updatedAt));
+  list.replaceChildren(...projects.map((p) =>
+    projectCard(p, groupSize(rootOf(p)) > 1 ? `${byId.get(rootOf(p)).title} 세계관` : '')));
+}
+
+function projectCard(p, worldLabel = '') {
+  const card = el('div', { class: 'card project-card', onclick: () => openProject(p) }, [
+    el('h3', { text: p.title }),
+    el('div', { class: 'meta' }, [
+      p.sheet ? '' : el('span', { class: 'badge', text: '임시저장' }),
+      worldLabel ? el('span', { class: 'badge', text: worldLabel }) : '',
+      ...p.genres.map((g) => el('span', { class: 'badge', text: g })),
+      el('span', { class: 'pf-icons' },
+        PLATFORMS.filter((pf) => p.platforms.includes(pf.key))
+          .map((pf) => el('span', { class: 'pf-icon', title: pf.name, text: pf.short }))),
+      el('span', { class: 'date', text: formatDate(p.updatedAt) }),
+    ]),
+  ]);
+  const moreBtn = el('button', {
+    class: 'icon-btn more-btn', 'aria-label': '더 보기', 'aria-haspopup': 'menu', text: '⋯',
+    onclick: (e) => { e.stopPropagation(); toggleCardMenu(card, p); },
+  });
+  card.append(moreBtn);
+  return card;
+}
+
+function closeCardMenus() {
+  document.querySelectorAll('.project-card .menu').forEach((m) => m.remove());
+}
+function toggleCardMenu(card, p) {
+  const opened = card.querySelector('.menu');
+  closeCardMenus();
+  if (opened) return;
+  card.append(el('div', { class: 'menu', role: 'menu', onclick: (e) => e.stopPropagation() }, [
+    p.platforms.includes(SHARED_PLATFORM) && p.sheet
+      ? el('button', {
+          role: 'menuitem', text: '같은 세계관 캐릭터 추가',
+          onclick: (e) => { e.stopPropagation(); closeCardMenus(); startLinkedCharacter(p); },
+        })
+      : '',
+    el('button', {
+      role: 'menuitem', text: '텍스트로 내보내기',
+      onclick: (e) => { e.stopPropagation(); closeCardMenus(); exportProjectText(p); },
+    }),
+    el('button', {
+      class: 'danger', role: 'menuitem', text: '삭제',
+      onclick: (e) => { e.stopPropagation(); closeCardMenus(); deleteProject(p); },
+    }),
+  ]));
+}
+
+async function deleteProject(p) {
+  const linked = p.worldFrom ? [] : (await worldGroup(p.id)).filter((x) => x.id !== p.id);
+  const heir = linked.sort((a, b) => a.updatedAt - b.updatedAt)[0];
+  const note = heir ? `\n같은 세계관 캐릭터 ${linked.length}개는 남고, 세계관은 "${heir.title}"이(가) 이어받아요.` : '';
+  if (!confirm(`"${p.title}"을(를) 삭제할까요?\n만든 결과와 버전도 모두 사라져요.${note}`)) return;
+  try {
+    if (heir) await handOverWorld(p, heir, linked);
+    await db.deleteProject(p.id);
+    markDeleted(p.id); // 다른 기기에도 삭제가 전파되도록
+    if (state.project && state.project.id === p.id) state.project = null;
+    toast('삭제했어요');
+  } catch {
+    toast('삭제하지 못했어요');
+  }
+  renderHome();
+}
+
+// 원본을 지우기 전에 리핀 세계관 버전을 가장 오래된 묶음 캐릭터에게 옮기고, 나머지는 그 캐릭터를 원본으로
+async function handOverWorld(root, heir, linked) {
+  for (const v of await loadItemVersions(root.id, SHARED_PLATFORM, 'world')) {
+    await saveVersion({ ...v, id: newId(), projectId: heir.id });
+  }
+  if (heir.sheet && root.sheet) heir.sheet.world = root.sheet.world;
+  for (const x of linked) {
+    x.worldFrom = x.id === heir.id ? null : heir.id;
+    x.updatedAt = Date.now();
+    await persistProject(x);
+  }
+  const cur = state.project && linked.find((x) => x.id === state.project.id);
+  if (cur) state.project.worldFrom = cur.worldFrom;
+}
+
+// 이 캐릭터와 같은 세계관(리핀)을 쓰는 새 캐릭터 입력 시작. 장르·유저 역할은 원본에서 가져옴
+async function startLinkedCharacter(source) {
+  const rootId = worldRootId(source);
+  const root = rootId === source.id ? source : await getProject(rootId);
+  if (!root) { toast('원본 캐릭터를 찾을 수 없어요'); return; }
+  resetInput();
+  state.genres = new Set(root.genres);
+  document.querySelectorAll('#genreChips input').forEach((i) => { i.checked = state.genres.has(i.value); });
+  $('#userRole').value = root.userRole || '';
+  setWorldFrom(root.id, root.title);
+  go('input');
+}
+
+// 입력 화면: 같은 세계관 캐릭터면 안내를 띄우고 플랫폼을 리핀으로 고정
+function setWorldFrom(rootId, rootTitle) {
+  state.worldFrom = rootId || null;
+  const banner = $('#worldBanner');
+  banner.hidden = !rootId;
+  $('#platformField').hidden = !!rootId;
+  if (!rootId) return;
+  state.platforms = new Set([SHARED_PLATFORM]);
+  document.querySelectorAll('#platformChecks input').forEach((i) => { i.checked = i.value === SHARED_PLATFORM; });
+  $('#toSheetBtn').disabled = false;
+  const show = (title) => { banner.textContent = `"${title}"과(와) 같은 세계관의 새 캐릭터예요 · 리핀 전용`; };
+  if (rootTitle) show(rootTitle);
+  else { show('원본'); getProject(rootId).then((r) => { if (r && state.worldFrom === rootId) show(r.title); }); }
+}
+
+// === 내보내기·불러오기 ===
+const LS_LAST_BACKUP = 'cw.lastBackupAt';
+const LS_BACKUP_BASE = 'cw.backupBaseline'; // 한 번도 백업 안 했을 때 기준 시각(처음 앱을 연 때)
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+
+function downloadFile(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = el('a', { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function ymd(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+}
+
+async function backupAll() {
+  if (!db.available) { toast('이 브라우저에서는 저장이 안 돼요'); return; }
+  try {
+    const [projects, versions] = await Promise.all([db.all('projects'), db.all('versions')]);
+    const data = { app: 'character-workshop', format: 1, exportedAt: Date.now(), projects, versions };
+    downloadFile(`character-workshop-${ymd(Date.now())}.json`, JSON.stringify(data, null, 2), 'application/json');
+    lsSet(LS_LAST_BACKUP, String(Date.now()));
+    toast(`캐릭터 ${projects.length}개를 백업했어요`);
+    renderBackupBanner();
+  } catch {
+    toast('백업하지 못했어요');
+  }
+}
+
+// 같은 형식 JSON을 병합. id가 겹치면 updatedAt이 최신인 프로젝트 쪽을 유지하고,
+// 그 프로젝트의 버전도 같은 쪽을 따름
+async function restoreBackup(file) {
+  if (!db.available) { toast('이 브라우저에서는 저장이 안 돼요'); return; }
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    toast('백업 파일을 읽지 못했어요');
+    return;
+  }
+  if (!data || !Array.isArray(data.projects) || !Array.isArray(data.versions)) {
+    toast('캐릭터 공방 백업 파일이 아니에요');
+    return;
+  }
+  try {
+    const localProjects = new Map((await db.all('projects')).map((p) => [p.id, p]));
+    const localVersionIds = new Set((await db.all('versions')).map((v) => v.id));
+    const importWins = new Set(); // 백업 쪽을 쓰는 프로젝트 id
+    let added = 0, updated = 0;
+    for (const p of data.projects) {
+      if (!p || typeof p.id !== 'string' || typeof p.title !== 'string') continue;
+      const local = localProjects.get(p.id);
+      if (local && (local.updatedAt || 0) >= (p.updatedAt || 0)) continue;
+      await db.put('projects', {
+        ...p,
+        genres: Array.isArray(p.genres) ? p.genres : [],
+        platforms: Array.isArray(p.platforms) ? p.platforms : [],
+      });
+      importWins.add(p.id);
+      local ? updated++ : added++;
+    }
+    for (const v of data.versions) {
+      if (!v || typeof v.id !== 'string' || typeof v.projectId !== 'string' || typeof v.text !== 'string') continue;
+      // 새 버전은 추가, 겹치는 버전은 백업 쪽 프로젝트가 이겼을 때만 덮어씀
+      if (localVersionIds.has(v.id) && !importWins.has(v.projectId)) continue;
+      if (!localProjects.has(v.projectId) && !importWins.has(v.projectId)) continue; // 프로젝트 없는 버전
+      await db.put('versions', v);
+    }
+    toast(added || updated ? `새 캐릭터 ${added}개, 갱신 ${updated}개를 불러왔어요` : '불러올 새 내용이 없어요');
+  } catch {
+    toast('불러오는 중에 문제가 생겼어요');
+  }
+  renderHome();
+}
+
+// === 기기 간 동기화 (GitHub Gist) ===
+// 비공개 Gist 하나에 전체 데이터를 JSON으로 두고, 프로젝트마다 updatedAt이 최신인 쪽을
+// 프로젝트 기록과 버전째로 통째로 씀. 삭제는 삭제 시각(tombstone)으로 전파
+const LS_GH_TOKEN = 'cw.githubToken';
+const LS_GIST_ID = 'cw.gistId';
+const LS_LAST_SYNC = 'cw.lastSyncAt';
+const LS_DELETED = 'cw.deletedProjects'; // { projectId: 삭제 시각 }
+const SYNC_DESC = 'character-workshop-sync';
+const SYNC_FILE = 'character-workshop.json';
+const GH_API = 'https://api.github.com';
+
+function deletedMap() {
+  try { return JSON.parse(lsGet(LS_DELETED) || '{}') || {}; } catch { return {}; }
+}
+function markDeleted(id) {
+  const m = deletedMap();
+  m[id] = Date.now();
+  lsSet(LS_DELETED, JSON.stringify(m));
+}
+
+const SYNC_NET_ERROR = '동기화하지 못했어요 (네트워크 연결이 끊겼어요)';
+// 404는 호출한 쪽이 처리(저장해 둔 Gist가 지워진 경우)
+async function gh(path, token, options = {}) {
+  let res;
+  try {
+    res = await fetch(GH_API + path, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
+  } catch {
+    throw new UserError(SYNC_NET_ERROR);
+  }
+  if (res.status === 401) throw new UserError('GitHub 토큰을 확인해 주세요');
+  if (res.status === 403) throw new UserError('토큰에 Gist 읽기·쓰기 권한이 있는지 확인해 주세요');
+  if (!res.ok && res.status !== 404) throw new UserError(`동기화하지 못했어요 (GitHub 오류 ${res.status})`);
+  return res;
+}
+
+// 저장해 둔 id → 없으면 내 Gist 목록에서 설명으로 찾음. 처음이면 null
+async function findGist(token) {
+  const saved = lsGet(LS_GIST_ID);
+  if (saved) {
+    const res = await gh(`/gists/${encodeURIComponent(saved)}`, token);
+    if (res.ok) return res.json();
+  }
+  for (let page = 1; page <= 10; page++) {
+    const list = await (await gh(`/gists?per_page=100&page=${page}`, token)).json();
+    if (!Array.isArray(list)) break;
+    const hit = list.find((g) => g.description === SYNC_DESC && g.files && g.files[SYNC_FILE]);
+    if (hit) return (await gh(`/gists/${hit.id}`, token)).json();
+    if (list.length < 100) break;
+  }
+  return null;
+}
+
+async function readRemote(gist) {
+  const f = gist && gist.files && gist.files[SYNC_FILE];
+  if (!f) return null;
+  let text = f.content;
+  if (f.truncated) { // 큰 파일은 API 응답에서 잘리므로 원본 주소에서 받음
+    try { text = await (await fetch(f.raw_url)).text(); } catch { throw new UserError(SYNC_NET_ERROR); }
+  }
+  try {
+    const d = JSON.parse(text);
+    return d && Array.isArray(d.projects) && Array.isArray(d.versions) ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+function groupByProject(versions) {
+  const m = new Map();
+  for (const v of versions) {
+    if (!m.has(v.projectId)) m.set(v.projectId, []);
+    m.get(v.projectId).push(v);
+  }
+  return m;
+}
+function mergeSync(local, remote) {
+  const deleted = { ...(remote.deleted || {}) };
+  for (const [id, t] of Object.entries(local.deleted)) deleted[id] = Math.max(deleted[id] || 0, t);
+  const L = new Map(local.projects.map((p) => [p.id, p]));
+  const R = new Map(remote.projects.filter((p) => p && typeof p.id === 'string' && typeof p.title === 'string').map((p) => [p.id, p]));
+  const LV = groupByProject(local.versions);
+  const RV = groupByProject(remote.versions.filter((v) => v && typeof v.id === 'string' && typeof v.projectId === 'string' && typeof v.text === 'string'));
+  const projects = [], versions = [], fromRemote = [], toDelete = [];
+  let upload = !remote.projects.length && !!local.projects.length;
+  for (const id of new Set([...L.keys(), ...R.keys()])) {
+    const l = L.get(id), r = R.get(id);
+    const useRemote = !!r && (!l || (r.updatedAt || 0) > (l.updatedAt || 0));
+    const p = useRemote ? r : l;
+    if ((deleted[id] || 0) >= (p.updatedAt || 0)) {
+      if (l) toDelete.push(id);
+      if (r) upload = true;
+      continue;
+    }
+    projects.push(p);
+    versions.push(...((useRemote ? RV : LV).get(id) || []));
+    if (useRemote) fromRemote.push(id);
+    else if (!r || r.updatedAt !== l.updatedAt) upload = true;
+  }
+  if (Object.keys(deleted).some((id) => deleted[id] !== (remote.deleted || {})[id])) upload = true;
+  const merged = { app: 'character-workshop', format: 1, exportedAt: Date.now(), projects, versions, deleted };
+  return { merged, fromRemote, toDelete, remoteProjects: R, remoteVersions: RV, upload };
+}
+
+let syncing = null;
+let lastAutoSync = 0;
+function syncNow(opts) {
+  if (!syncing) syncing = runSync(opts).finally(() => { syncing = null; });
+  return syncing;
+}
+// 홈에 올 때·앱을 열 때 자동으로(1분에 한 번까지)
+function autoSync() {
+  if (!(lsGet(LS_GH_TOKEN) || '').trim() || Date.now() - lastAutoSync < 60000) return;
+  lastAutoSync = Date.now();
+  syncNow({ silent: true });
+}
+
+// silent: 바뀐 게 없으면 알리지 않음(오류는 알림)
+async function runSync({ silent = false } = {}) {
+  const token = (lsGet(LS_GH_TOKEN) || '').trim();
+  if (!token) { toast('설정 > 동기화에서 GitHub 토큰을 넣어 주세요'); return; }
+  if (!db.available) { toast('이 브라우저에서는 저장이 안 돼요'); return; }
+  flushDraftSave();
+  flushSheetSave();
+  try {
+    const gist = await findGist(token);
+    const remote = (await readRemote(gist)) || { projects: [], versions: [], deleted: {} };
+    const [projects, versions] = await Promise.all([db.all('projects'), db.all('versions')]);
+    const r = mergeSync({ projects, versions, deleted: deletedMap() }, remote);
+
+    for (const id of r.toDelete) await db.deleteProject(id);
+    for (const id of r.fromRemote) {
+      await db.deleteProject(id); // 다른 기기 쪽이 최신이면 버전까지 통째로 바꿈
+      await db.put('projects', r.remoteProjects.get(id));
+      for (const v of r.remoteVersions.get(id) || []) await db.put('versions', v);
+    }
+    lsSet(LS_DELETED, JSON.stringify(r.merged.deleted));
+
+    let gistId = gist && gist.id;
+    if (r.upload || !gist) {
+      const files = { [SYNC_FILE]: { content: JSON.stringify(r.merged) } };
+      const res = gist
+        ? await gh(`/gists/${gist.id}`, token, { method: 'PATCH', body: JSON.stringify({ files }) })
+        : await gh('/gists', token, { method: 'POST', body: JSON.stringify({ description: SYNC_DESC, public: false, files }) });
+      if (!res.ok) throw new UserError(`동기화하지 못했어요 (GitHub 오류 ${res.status})`);
+      gistId = (await res.json()).id;
+    }
+    if (gistId) lsSet(LS_GIST_ID, gistId);
+    lsSet(LS_LAST_SYNC, String(Date.now()));
+
+    const n = r.fromRemote.length + r.toDelete.length;
+    if (n) {
+      toast(`다른 기기의 변경 ${n}개를 가져왔어요`);
+      // 보고 있던 프로젝트가 바뀌었으면 새 내용으로 다시 열고, 지워졌으면 홈으로
+      const cur = state.project;
+      if (cur && r.toDelete.includes(cur.id)) { state.project = null; go('home'); }
+      else if (cur && r.fromRemote.includes(cur.id) && currentScreen() !== 'home') openProject(r.remoteProjects.get(cur.id));
+      else if (currentScreen() === 'home') renderHome();
+    } else if (!silent) {
+      toast('동기화했어요');
+    }
+  } catch (e) {
+    toast(e instanceof UserError ? e.message : '동기화하지 못했어요');
+  }
+  renderSyncStatus();
+}
+
+function renderSyncStatus() {
+  const at = Number(lsGet(LS_LAST_SYNC));
+  $('#syncStatus').textContent = at
+    ? `마지막 동기화: ${formatDate(at)} ${new Date(at).getHours()}:${String(new Date(at).getMinutes()).padStart(2, '0')}`
+    : '아직 동기화하지 않았어요';
+}
+
+// 플랫폼별 확정본(없으면 최신본)을 .txt로
+async function exportProjectText(p) {
+  const profiles = getPlatformProfiles();
+  const blocks = [];
+  for (const k of PLATFORM_KEYS.filter((x) => p.platforms.includes(x))) {
+    const fields = profiles[k].fields.filter((f) => f.use);
+    const lists = await Promise.all(fields.map((f) => loadItemVersions(versionOwner(p, k, f.key), k, f.key)));
+    const parts = fields.map((f, i) => {
+      const v = preferredVersion(lists[i]);
+      return v ? `[${fieldLabel(f)}]${v.pinned ? '' : ' (확정 전 최신본)'}\n${plainText(f.key, v.text)}` : '';
+    }).filter(Boolean);
+    if (parts.length) blocks.push(`===== ${profiles[k].name} =====\n\n${parts.join('\n\n')}`);
+  }
+  if (!blocks.length) { toast('내보낼 결과가 없어요'); return; }
+  const safeTitle = p.title.replace(/[\\/:*?"<>|]/g, '').trim() || '캐릭터';
+  downloadFile(`${safeTitle}.txt`, `${p.title}\n\n${blocks.join('\n\n\n')}\n`, 'text/plain;charset=utf-8');
+  toast('텍스트로 내보냈어요');
+}
+
+// 마지막 백업(없으면 처음 앱을 연 때)에서 7일이 지났고 캐릭터가 있으면 배너
+function renderBackupBanner(projectCount) {
+  const banner = $('#backupBanner');
+  let base = Number(lsGet(LS_LAST_BACKUP)) || Number(lsGet(LS_BACKUP_BASE));
+  if (!base) { base = Date.now(); lsSet(LS_BACKUP_BASE, String(base)); }
+  if (projectCount !== undefined) banner.dataset.count = String(projectCount);
+  banner.hidden = !(Number(banner.dataset.count) > 0 && Date.now() - base >= WEEK);
+}
+
+// === 프로젝트 저장 ===
+function makeTitle(raw) {
+  const t = raw.replace(/\s+/g, ' ').trim();
+  return t ? t.slice(0, 15) : '제목 없음';
+}
+// 입력 화면 값으로 현재 프로젝트를 저장(없으면 새로 만듦)하고 state.project에 보관.
+// 원문·장르·유저 역할이 그대로면 기존 설정 시트를 유지하고, 바뀌었으면 비워서 다시 만들게 함
+async function saveProjectFromInput() {
+  flushSheetSave();
+  const prev = state.project;
+  const rawInput = $('#rawInput').value;
+  const genres = GENRES.filter((g) => state.genres.has(g));
+  const userRole = $('#userRole').value.trim();
+  const keepSheet = !!(prev && prev.sheet && prev.rawInput === rawInput
+    && prev.userRole === userRole && prev.genres.join() === genres.join());
+  const project = {
+    id: prev ? prev.id : newId(),
+    title: keepSheet ? prev.title : makeTitle(rawInput),
+    rawInput,
+    genres,
+    userRole,
+    platforms: PLATFORM_KEYS.filter((k) => state.platforms.has(k)),
+    sheet: keepSheet ? prev.sheet : null,
+    updatedAt: Date.now(),
+  };
+  if (state.worldFrom) project.worldFrom = state.worldFrom;
+  state.project = project;
+  if (state.sheetError && state.sheetError.id === project.id) state.sheetError = null;
+  return persistProject(project);
+}
+
+// 입력 중 자동 임시저장 (800ms 디바운스). 설정 시트가 이미 있는 캐릭터는 저장하면 시트가 비워지므로
+// 자동으로는 저장하지 않고 "설정 정리하기"·"임시저장" 때 반영
+let draftTimer = null;
+function scheduleDraftSave() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(flushDraftSave, 800);
+}
+function cancelDraftSave() {
+  clearTimeout(draftTimer);
+  draftTimer = null;
+}
+async function flushDraftSave() {
+  if (!draftTimer) return;
+  cancelDraftSave();
+  const p = state.project;
+  if (p && (p.sheet || state.sheetLoading === p.id)) return;
+  if (!p && !$('#rawInput').value.trim()) return; // 빈 카드는 만들지 않음
+  if (await saveProjectFromInput()) {
+    const t = new Date();
+    $('#draftStatus').textContent = `자동 저장했어요 · ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+  }
+}
+
+// 홈에서 카드를 누르면 그 프로젝트를 이어서 작업
+function openProject(p) {
+  flushDraftSave();
+  $('#draftStatus').textContent = '';
+  flushSheetSave();
+  state.project = p;
+  viewVersion.clear(); // 다시 열면 확정본(없으면 최신본)부터
+  editDrafts.clear();
+  state.genres = new Set(p.genres);
+  state.platforms = new Set(p.platforms);
+  state.activeTab = null;
+  $('#rawInput').value = p.rawInput;
+  $('#userRole').value = p.userRole;
+  document.querySelectorAll('#genreChips input').forEach((i) => { i.checked = state.genres.has(i.value); });
+  document.querySelectorAll('#platformChecks input').forEach((i) => { i.checked = state.platforms.has(i.value); });
+  $('#toSheetBtn').disabled = state.platforms.size === 0;
+  setWorldFrom(p.worldFrom);
+  if (!p.sheet) { go('input'); return; }
+  // 만든 결과가 있으면 API 재호출 없이 저장된 버전을 보여 줌
+  hasProjectVersions(p.id).then((has) => {
+    if (state.project === p) go(has ? 'result' : 'sheet');
+  });
+}
+
+function resetInput() {
+  flushDraftSave();
+  $('#draftStatus').textContent = '';
+  flushSheetSave();
+  state.project = null;
+  viewVersion.clear();
+  editDrafts.clear();
+  state.genres.clear();
+  state.platforms.clear();
+  state.activeTab = null;
+  $('#rawInput').value = '';
+  $('#userRole').value = '';
+  document.querySelectorAll('#genreChips input, #platformChecks input').forEach((i) => { i.checked = false; });
+  $('#toSheetBtn').disabled = true;
+  setWorldFrom(null);
+}
+
+// === 2. 입력 ===
+function renderInput() {
+  $('#genreChips').replaceChildren(...GENRES.map((g) =>
+    el('label', { class: 'chip' }, [
+      el('input', { type: 'checkbox', value: g, onchange: (e) => {
+        e.target.checked ? state.genres.add(g) : state.genres.delete(g);
+        scheduleDraftSave();
+      } }),
+      el('span', { text: g }),
+    ])
+  ));
+  $('#platformChecks').replaceChildren(...PLATFORMS.map((p) =>
+    el('label', { class: 'chip' }, [
+      el('input', { type: 'checkbox', value: p.key, onchange: (e) => {
+        e.target.checked ? state.platforms.add(p.key) : state.platforms.delete(p.key);
+        $('#toSheetBtn').disabled = state.platforms.size === 0;
+        scheduleDraftSave();
+      } }),
+      el('span', { text: p.name }),
+    ])
+  ));
+}
+
+// === 3. 설정 시트 ===
+let sheetJob = 0; // 가장 최근 생성 요청 번호. 이전 요청 결과는 버림
+
+async function runBuildSheet() {
+  const p = state.project;
+  if (!p) return;
+  const job = ++sheetJob;
+  state.sheetLoading = p.id;
+  state.sheetError = null;
+  if (currentScreen() === 'sheet') renderSheetScreen();
+  try {
+    const sheet = await buildSheet(p);
+    if (job !== sheetJob) return;
+    sheet.editedAt = Date.now(); // 이보다 먼저 만든 결과에는 "설정이 바뀌었어요" 배지
+    p.sheet = sheet;
+    if (sheet.title.trim()) p.title = sheet.title.trim();
+    p.updatedAt = Date.now();
+    if (!(await persistProject(p))) toast('이 브라우저에서는 저장이 안 돼요');
+  } catch (e) {
+    if (job !== sheetJob) return;
+    state.sheetError = { id: p.id, message: userMessage(e) };
+  } finally {
+    if (job === sheetJob) {
+      state.sheetLoading = null;
+      if (currentScreen() === 'sheet' && state.project === p) renderSheetScreen();
+    }
+  }
+}
+
+// 카드 수정은 state.project.sheet에 바로 반영하고, 저장은 500ms 디바운스
+let sheetSaveTimer = null;
+function scheduleSheetSave() {
+  clearTimeout(sheetSaveTimer);
+  sheetSaveTimer = setTimeout(flushSheetSave, 500);
+}
+function flushSheetSave() {
+  if (!sheetSaveTimer) return;
+  clearTimeout(sheetSaveTimer);
+  sheetSaveTimer = null;
+  const p = state.project;
+  if (!p || !p.sheet) return;
+  p.updatedAt = Date.now();
+  persistProject(p);
+}
+
+// missing의 field(모델이 자유롭게 씀)를 카드 키로 맞춤
+const MISSING_ALIASES = [
+  [/이름|나이|성별|직업|지위|name|age|basic/i, 'basic'],
+  [/유저|user/i, 'userRole'],
+  [/갈등|비밀|conflict/i, 'conflict'],
+  [/외형|looks/i, 'looks'],
+  [/성격|말투|호칭|personality/i, 'personality'],
+  [/세계|시대|world/i, 'world'],
+  [/훅|사건|hook/i, 'hooks'],
+  [/톤|분위기|tone/i, 'tone'],
+];
+function missingFieldKey(m) {
+  if (SHEET_FIELDS.some(([k]) => k === m.field)) return m.field;
+  for (const s of [m.field, m.question]) {
+    for (const [re, key] of MISSING_ALIASES) if (re.test(s)) return key;
+  }
+  return 'basic';
+}
+const sheetLabel = (key) => SHEET_FIELDS.find(([k]) => k === key)[1];
+
+function answerMissing(index, answer) {
+  const text = answer.trim();
+  const p = state.project;
+  if (!text || !p || !p.sheet) return;
+  const m = p.sheet.missing[index];
+  const key = missingFieldKey(m);
+  const cur = p.sheet[key].trim();
+  p.sheet[key] = cur ? `${cur}\n${text}` : text;
+  p.sheet.missing.splice(index, 1);
+  p.sheet.editedAt = p.updatedAt = Date.now();
+  persistProject(p);
+  renderSheetScreen();
+}
+
+function updateToResultBtn() {
+  const p = state.project;
+  $('#toResultBtn').disabled = !p || !p.sheet || p.sheet.missing.length > 0 || state.sheetLoading === p.id;
+}
+
+function questionCard(m, index) {
+  const input = el('input', { class: 'field', type: 'text', placeholder: '직접 입력', 'aria-label': '직접 입력' });
+  const apply = () => answerMissing(index, input.value);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) apply(); });
+  return el('div', { class: 'card q-card' }, [
+    el('p', { class: 'q-text', text: m.question }),
+    el('p', { class: 'hint q-target', text: `→ ${sheetLabel(missingFieldKey(m))} 카드에 들어가요` }),
+    m.suggestions.length
+      ? el('div', { class: 'q-options' }, m.suggestions.map((s) =>
+          el('button', { class: 'btn', type: 'button', text: s, onclick: () => answerMissing(index, s) })))
+      : '',
+    el('div', { class: 'q-custom' }, [
+      input,
+      el('button', { class: 'btn btn-primary', type: 'button', text: '적용', onclick: apply }),
+    ]),
+  ]);
+}
+
+function renderSheetScreen() {
+  const cards = $('#sheetCards');
+  const questions = $('#sheetQuestions');
+  const p = state.project;
+  questions.replaceChildren();
+  $('#sheetHint').hidden = true;
+  updateToResultBtn();
+
+  if (p && state.sheetLoading === p.id) {
+    cards.replaceChildren(el('div', { class: 'loading' }, [
+      el('div', { class: 'spinner', 'aria-hidden': 'true' }),
+      el('span', { text: '설정을 정리하는 중...' }),
+    ]));
+    return;
+  }
+  if (p && state.sheetError && state.sheetError.id === p.id) {
+    cards.replaceChildren(el('div', { class: 'card error-box' }, [
+      el('p', { text: state.sheetError.message }),
+      el('button', { class: 'btn btn-primary', type: 'button', text: '다시 시도', onclick: runBuildSheet }),
+    ]));
+    return;
+  }
+  if (!p || !p.sheet) {
+    cards.replaceChildren(el('p', { class: 'empty', text: '먼저 아이디어를 입력하고 "설정 정리하기"를 눌러 주세요' }));
+    return;
+  }
+
+  $('#sheetHint').hidden = false;
+  questions.replaceChildren(...p.sheet.missing.map(questionCard));
+  cards.replaceChildren(...SHEET_FIELDS.map(([key, label]) => {
+    const id = 'sheet-' + key;
+    const ta = el('textarea', { class: 'field', id, rows: key === 'hooks' ? 4 : 3 });
+    ta.value = p.sheet[key];
+    // 같은 세계관 캐릭터의 세계관 카드는 원본 것이라 읽기 전용
+    const shared = key === 'world' && !!p.worldFrom;
+    ta.readOnly = shared;
+    const card = el('div', { class: 'card sheet-card' }, [
+      el('h3', {}, el('label', { for: id, text: shared ? `${label} · 공유 (원본 캐릭터에서 고쳐 주세요)` : label })),
+      ta,
+    ]);
+    const mark = () => card.classList.toggle('suggested', ta.value.includes('(제안)'));
+    mark();
+    ta.addEventListener('input', () => {
+      p.sheet[key] = ta.value;
+      p.sheet.editedAt = Date.now();
+      mark();
+      scheduleSheetSave();
+    });
+    return card;
+  }));
+}
+
+// === 4. 결과 ===
+// 생성 상태: key `${projectId}:${platform}` → { loading: true } | { error: '문구' }
+const genStatus = new Map();
+const genKey = (projectId, platform) => `${projectId}:${platform}`;
+
+async function runGenerate(project, platformKey) {
+  const key = genKey(project.id, platformKey);
+  if (genStatus.get(key)?.loading) return;
+  genStatus.set(key, { loading: true });
+  refreshResult(project.id);
+  try {
+    await generatePlatform(project, platformKey);
+    genStatus.delete(key);
+    project.updatedAt = Date.now();
+    await persistProject(project);
+  } catch (e) {
+    genStatus.set(key, { error: userMessage(e) });
+  }
+  refreshResult(project.id);
+}
+// 지금 결과 화면에 그 프로젝트가 떠 있으면 다시 그림
+function refreshResult(projectId) {
+  if (currentScreen() === 'result' && state.project && state.project.id === projectId) renderResult();
+}
+
+// "이 설정으로 만들기": 결과가 아직 없는 플랫폼만 병렬 생성
+async function startGeneration() {
+  flushSheetSave();
+  const p = state.project;
+  if (!p || !p.sheet) return;
+  state.activeTab = null;
+  go('result');
+  await Promise.all(p.platforms.map(async (k) => {
+    if (!(await hasPlatformVersions(p.id, k))) runGenerate(p, k);
+  }));
+}
+
+async function copyText(text, doneMessage = '복사했어요') {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // clipboard API를 못 쓰는 환경(보안 컨텍스트 아님 등) 대비
+    const ta = el('textarea', { style: 'position:fixed;opacity:0' });
+    ta.value = text;
+    document.body.append(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    if (!ok) { toast('복사하지 못했어요'); return; }
+  }
+  toast(doneMessage);
+}
+
+// === 항목별 버전 관리 ===
+const DIRECTIONS = ['더 짧게', '더 길게', '더 자극적으로', '더 담백하게', '말투 더 강하게', '대사 더 많이'];
+const itemKey = (projectId, platform, field) => `${projectId}:${platform}:${field}`;
+const itemBusy = new Set();       // 새 버전을 만드는 중인 항목
+const viewVersion = new Map();    // 항목별로 지금 보고 있는 버전 id
+const editDrafts = new Map();     // 직접 편집 중인 항목의 입력값 (다시 그려도 유지)
+
+async function regenerateItem(p, platformKey, fieldKey, instruction = '') {
+  const key = itemKey(p.id, platformKey, fieldKey);
+  if (itemBusy.has(key)) return;
+  itemBusy.add(key);
+  refreshResult(p.id);
+  try {
+    const v = await generateItemVersion(p, platformKey, fieldKey, instruction.trim());
+    viewVersion.set(key, v.id);
+    p.updatedAt = Date.now();
+    await persistProject(p);
+  } catch (e) {
+    toast(userMessage(e));
+  } finally {
+    itemBusy.delete(key);
+    refreshResult(p.id);
+  }
+}
+
+// 별표: 그 버전만 pinned. 이미 확정된 버전을 다시 누르면 확정 해제
+async function togglePin(p, platformKey, fieldKey, version) {
+  const list = await loadItemVersions(p.id, platformKey, fieldKey);
+  const pin = !version.pinned;
+  for (const v of list) {
+    const want = pin && v.id === version.id;
+    if (v.pinned !== want) { v.pinned = want; await updateVersion(v); }
+  }
+  if (!pin) await pruneItem(p.id, platformKey, fieldKey);
+  viewVersion.set(itemKey(p.id, platformKey, fieldKey), version.id);
+  p.updatedAt = Date.now();
+  await persistProject(p);
+  refreshResult(p.id);
+}
+
+function showVersion(p, platformKey, fieldKey, version) {
+  if (!version) return;
+  viewVersion.set(itemKey(p.id, platformKey, fieldKey), version.id);
+  refreshResult(p.id);
+}
+
+// 휴대폰에서 카드 좌우 스와이프로 버전 넘김
+function addSwipe(node, onPrev, onNext) {
+  let x0 = null, y0 = null;
+  node.addEventListener('touchstart', (e) => {
+    if (e.target.closest('input, textarea, button')) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, { passive: true });
+  node.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    const dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx > 0) onPrev(); else onNext();
+  });
+}
+
+function countLabel(field, v) {
+  if (field.key === 'hashtags') {
+    const n = v.text.split(/\s+/).filter(Boolean).length;
+    return { text: field.maxCount ? `${n} / ${field.maxCount}개` : `${n}개 · 제한 미설정`, over: !!field.maxCount && n > field.maxCount };
+  }
+  if (field.key === 'lorebook') {
+    // 저장본은 JSON, 편집 중에는 "키워드: 내용" 줄
+    const n = v.text.trim().startsWith('[') ? parseLorebook(v.text).length : parseLorebookLines(v.text).length;
+    return { text: `${n}개 항목`, over: false };
+  }
+  return { text: field.maxChars ? `${v.chars} / ${field.maxChars}` : `${v.chars}자 · 제한 미설정`, over: !!field.maxChars && v.chars > field.maxChars };
+}
+
+function resultCard(p, platformKey, field, label, versions) {
+  const key = itemKey(p.id, platformKey, field.key);
+  // 보고 있던 버전 → 없으면 확정본 → 없으면 최신본
+  let idx = versions.findIndex((x) => x.id === viewVersion.get(key));
+  if (idx < 0) idx = versions.indexOf(preferredVersion(versions));
+  const v = versions[idx];
+  const busy = itemBusy.has(key);
+  if (editDrafts.has(key)) return editCard(p, platformKey, field, label, v, idx, versions.length);
+  const count = countLabel(field, v);
+  const newest = versions[versions.length - 1].createdAt;
+  const stale = !!p.sheet.editedAt && newest < p.sheet.editedAt;
+  const showAt = (i) => () => showVersion(p, platformKey, field.key, versions[i]);
+  const regen = (instruction) => regenerateItem(p, platformKey, field.key, instruction);
+
+  // 방향 지시 칩 (▾로 펼침)
+  const custom = el('input', { class: 'field', type: 'text', placeholder: '예) 첫 대사를 존댓말로', 'aria-label': '방향 지시 직접 입력' });
+  const applyCustom = () => { if (custom.value.trim()) regen(custom.value); };
+  custom.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) applyCustom(); });
+  const customRow = el('div', { class: 'q-custom', hidden: true }, [
+    custom,
+    el('button', { class: 'btn btn-primary', type: 'button', text: '만들기', onclick: applyCustom }),
+  ]);
+  const dirPanel = el('div', { class: 'dir-panel', hidden: true }, [
+    el('div', { class: 'dir-chips' }, [
+      ...DIRECTIONS.map((d) => el('button', { class: 'btn btn-chip', type: 'button', text: d, onclick: () => regen(d) })),
+      el('button', {
+        class: 'btn btn-chip', type: 'button', text: '직접 입력',
+        onclick: () => { customRow.hidden = !customRow.hidden; if (!customRow.hidden) custom.focus(); },
+      }),
+    ]),
+    customRow,
+  ]);
+  const dirBtn = el('button', {
+    class: 'btn btn-narrow', type: 'button', 'aria-label': '방향 지시', 'aria-expanded': 'false', disabled: busy, text: '▾',
+    onclick: () => {
+      dirPanel.hidden = !dirPanel.hidden;
+      dirBtn.setAttribute('aria-expanded', String(!dirPanel.hidden));
+    },
+  });
+
+  const card = el('div', { class: v.pinned ? 'card result-card pinned' : 'card result-card' }, [
+    el('div', { class: 'item-head' }, [
+      el('h3', { text: label }),
+      el('button', {
+        class: 'icon-btn star', type: 'button', 'aria-label': v.pinned ? '확정 해제' : '이 버전으로 확정',
+        'aria-pressed': String(!!v.pinned), disabled: busy, text: v.pinned ? '★' : '☆',
+        onclick: () => togglePin(p, platformKey, field.key, v),
+      }),
+    ]),
+    stale && !busy
+      ? el('button', { class: 'stale-badge', type: 'button', text: '설정이 바뀌었어요 · 새 버전 만들기', onclick: () => regen('') })
+      : '',
+    field.key === 'lorebook'
+      ? lorebookView(parseLorebook(v.text))
+      : el('p', { class: 'item-body', text: v.text || '(비어 있음)' }),
+    versionNote(v),
+    el('div', { class: 'item-info' }, [
+      el('span', { class: 'pager' }, [
+        el('button', { class: 'icon-btn', type: 'button', 'aria-label': '이전 버전', disabled: idx === 0, text: '‹', onclick: showAt(idx - 1) }),
+        el('span', { text: `v${idx + 1} / ${versions.length}` }),
+        el('button', { class: 'icon-btn', type: 'button', 'aria-label': '다음 버전', disabled: idx === versions.length - 1, text: '›', onclick: showAt(idx + 1) }),
+      ]),
+      el('span', { class: count.over ? 'count over' : 'count', text: count.text }),
+    ]),
+    el('div', { class: 'item-actions' }, [
+      el('button', { class: 'btn', type: 'button', disabled: busy, onclick: () => regen('') },
+        busy ? [el('span', { class: 'spinner spinner-sm', 'aria-hidden': 'true' }), ' 생성 중'] : '새 버전'),
+      dirBtn,
+      el('button', {
+        class: 'btn', type: 'button', text: '편집', disabled: busy,
+        onclick: () => { editDrafts.set(key, plainText(field.key, v.text)); refreshResult(p.id); },
+      }),
+      el('button', { class: 'btn', type: 'button', text: '복사', onclick: () => copyText(plainText(field.key, v.text)) }),
+    ]),
+    dirPanel,
+  ]);
+  addSwipe(card, () => idx > 0 && showAt(idx - 1)(), () => idx < versions.length - 1 && showAt(idx + 1)());
+  return card;
+}
+
+// 로어북: 키워드-내용 쌍 목록. 키워드를 누르면 키워드, "복사"는 내용을 복사
+function lorebookView(entries) {
+  if (!entries.length) return el('p', { class: 'item-body', text: '(비어 있음)' });
+  return el('div', { class: 'lore-list' }, entries.map((e) => el('div', { class: 'lore-row' }, [
+    el('button', {
+      class: 'lore-kw', type: 'button', text: e.keyword, title: '키워드 복사',
+      onclick: () => copyText(e.keyword, `"${e.keyword}" 키워드를 복사했어요`),
+    }),
+    el('p', { class: 'lore-content', text: e.content }),
+    el('button', {
+      class: 'btn lore-copy', type: 'button', text: '복사', 'aria-label': `${e.keyword} 내용 복사`,
+      onclick: () => copyText(e.content, `"${e.keyword}" 내용을 복사했어요`),
+    }),
+  ])));
+}
+
+// 버전 카드 아래 작은 글씨: "직접 수정" 배지, 방향 지시
+function versionNote(v) {
+  if (v.source !== 'manual' && !v.instruction) return '';
+  return el('p', { class: 'hint item-note' }, [
+    v.source === 'manual' ? el('span', { class: 'badge badge-sm', text: '직접 수정' }) : '',
+    v.instruction ? `지시: ${v.instruction}` : '',
+  ]);
+}
+
+// 직접 편집: 보고 있던 버전을 고쳐 새 버전(source "manual")으로 저장. 원래 버전은 그대로
+function editCard(p, platformKey, field, label, v, idx, total) {
+  const key = itemKey(p.id, platformKey, field.key);
+  const ta = el('textarea', {
+    class: 'field edit-area', 'aria-label': `${label} 편집`,
+    placeholder: field.key === 'lorebook' ? '한 줄에 하나씩 "키워드: 내용"' : '',
+  });
+  ta.value = editDrafts.get(key);
+  const count = el('span', { class: 'count' });
+  const update = () => {
+    const c = countLabel(field, { text: ta.value, chars: charCount(ta.value) });
+    count.textContent = c.text;
+    count.className = c.over ? 'count over' : 'count';
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 2 + 'px';
+  };
+  ta.addEventListener('input', () => { editDrafts.set(key, ta.value); update(); });
+  const card = el('div', { class: 'card result-card editing' }, [
+    el('div', { class: 'item-head' }, [el('h3', { text: label }), el('span', { class: 'hint', text: `v${idx + 1} / ${total} 편집 중` })]),
+    ta,
+    el('div', { class: 'item-info', style: 'margin-top:8px' }, [
+      el('span', { text: field.key === 'lorebook' ? '한 줄에 "키워드: 내용" 하나씩' : '저장하면 새 버전이 돼요' }),
+      count,
+    ]),
+    el('div', { class: 'item-actions' }, [
+      el('button', { class: 'btn', type: 'button', text: '취소', onclick: () => { editDrafts.delete(key); refreshResult(p.id); } }),
+      el('button', { class: 'btn btn-primary', type: 'button', text: '저장', onclick: () => saveManualEdit(p, platformKey, field, v, ta.value) }),
+    ]),
+  ]);
+  requestAnimationFrame(update);
+  return card;
+}
+
+async function saveManualEdit(p, platformKey, field, base, rawText) {
+  const key = itemKey(p.id, platformKey, field.key);
+  const text = field.key === 'hashtags'
+    ? hashtagText(rawText, null)
+    : field.key === 'lorebook'
+      ? toVersionText(field, parseLorebookLines(rawText))
+      : rawText.trim();
+  if (!text) {
+    toast(field.key === 'lorebook' ? '"키워드: 내용" 형식으로 한 줄 이상 입력해 주세요' : '내용을 입력해 주세요');
+    return;
+  }
+  editDrafts.delete(key);
+  if (text === base.text) { refreshResult(p.id); return; } // 바뀐 게 없으면 버전을 만들지 않음
+  const list = await loadItemVersions(p.id, platformKey, field.key);
+  const last = list.length ? list[list.length - 1].createdAt : 0;
+  const v = makeVersion(p.id, platformKey, field.key, text, '', Math.max(Date.now(), last + 1), 'manual');
+  await saveVersion(v);
+  await pruneItem(p.id, platformKey, field.key);
+  viewVersion.set(key, v.id);
+  p.updatedAt = Date.now();
+  await persistProject(p);
+  toast('직접 수정한 내용을 새 버전으로 저장했어요');
+  refreshResult(p.id);
+}
+
+// 현재 탭 플랫폼의 항목을 확정본(없으면 최신본)으로 묶어 복사
+async function copyAllPinned() {
+  const p = state.project;
+  const platformKey = state.activeTab;
+  if (!p || !platformKey) return;
+  const fields = getPlatformProfiles()[platformKey].fields.filter((f) => f.use);
+  const lists = await Promise.all(fields.map((f) => loadItemVersions(versionOwner(p, platformKey, f.key), platformKey, f.key)));
+  const parts = [];
+  let unpinned = 0;
+  fields.forEach((f, i) => {
+    if (!lists[i].length) return;
+    const v = preferredVersion(lists[i]);
+    if (!v.pinned) unpinned++;
+    parts.push(`[${fieldLabel(f)}]\n${plainText(f.key, v.text)}`);
+  });
+  if (!parts.length) { toast('복사할 결과가 없어요'); return; }
+  copyText(parts.join('\n\n'), unpinned ? `확정 안 된 항목 ${unpinned}개는 최신 버전으로 복사했어요` : '확정본을 모두 복사했어요');
+}
+
+// 생성·확정은 이미 즉시 저장되므로 남은 시트 수정만 저장하고 알림
+async function saveCurrentProject() {
+  const p = state.project;
+  if (!p) return;
+  if (sheetSaveTimer) flushSheetSave();
+  const ok = await persistProject(p);
+  toast(ok ? '저장했어요' : '이 브라우저에서는 저장이 안 돼요');
+}
+
+let resultRenderSeq = 0; // 늦게 끝난 이전 렌더가 덮어쓰지 않게
+async function renderResult() {
+  const seq = ++resultRenderSeq;
+  const p = state.project;
+  const tabs = $('#platformTabs');
+  const box = $('#resultCards');
+  if (!p || !p.sheet) {
+    tabs.replaceChildren();
+    box.replaceChildren(el('p', { class: 'empty', text: '홈에서 캐릭터를 열어 주세요' }));
+    return;
+  }
+  const keys = PLATFORM_KEYS.filter((k) => p.platforms.includes(k));
+  if (!keys.includes(state.activeTab)) state.activeTab = keys[0];
+  const active = state.activeTab;
+
+  tabs.replaceChildren(...keys.map((k) => {
+    const st = genStatus.get(genKey(p.id, k));
+    return el('button', {
+      class: 'tab', role: 'tab', 'aria-selected': String(k === active),
+      onclick: () => { state.activeTab = k; renderResult(); },
+    }, [
+      platformName(k),
+      st?.loading ? el('span', { class: 'spinner spinner-sm', 'aria-label': '생성 중' }) : '',
+      st?.error ? el('span', { class: 'tab-err', 'aria-label': '실패', text: '!' }) : '',
+    ]);
+  }));
+
+  const st = genStatus.get(genKey(p.id, active));
+  if (st?.loading) {
+    box.replaceChildren(el('div', { class: 'loading' }, [
+      el('div', { class: 'spinner', 'aria-hidden': 'true' }),
+      el('span', { text: `${platformName(active)}용으로 만드는 중...` }),
+    ]));
+    return;
+  }
+  if (st?.error) {
+    box.replaceChildren(el('div', { class: 'card error-box' }, [
+      el('p', { text: st.error }),
+      el('button', { class: 'btn btn-primary', type: 'button', text: '다시 시도', onclick: () => runGenerate(p, active) }),
+    ]));
+    return;
+  }
+
+  const profile = getPlatformProfiles()[active];
+  const fields = profile.fields.filter((f) => f.use);
+  const lists = await Promise.all(fields.map((f) => loadItemVersions(versionOwner(p, active, f.key), active, f.key)));
+  const root = p.worldFrom && active === SHARED_PLATFORM ? await getProject(p.worldFrom) : null;
+  if (seq !== resultRenderSeq) return;
+  if (!lists.some((l, i) => l.length && !isSharedWorld(p, active, fields[i].key))) {
+    box.replaceChildren(el('div', { class: 'card empty-box' }, [
+      el('p', { text: '아직 만든 결과가 없어요' }),
+      el('button', { class: 'btn btn-primary', type: 'button', text: `${platformName(active)}용 만들기`, onclick: () => runGenerate(p, active) }),
+    ]));
+    return;
+  }
+  box.replaceChildren(...fields.map((f, i) => (isSharedWorld(p, active, f.key)
+    ? sharedWorldCard(f, lists[i], root)
+    : lists[i].length
+      ? resultCard(p, active, f, fieldLabel(f), lists[i])
+      : missingItemCard(p, active, f))));
+  if (active === SHARED_PLATFORM) {
+    box.append(el('button', {
+      class: 'btn btn-block', type: 'button', text: '+ 같은 세계관 캐릭터 추가',
+      onclick: () => startLinkedCharacter(p),
+    }));
+  }
+}
+
+// 같은 세계관 캐릭터의 세계관 프롬프트: 원본 것을 보여 주기만 함(복사 가능)
+function sharedWorldCard(field, versions, root) {
+  const v = versions.length ? preferredVersion(versions) : null;
+  return el('div', { class: 'card result-card' }, [
+    el('div', { class: 'item-head' }, [
+      el('h3', { text: fieldLabel(field) }),
+      el('span', { class: 'badge', text: '공유' }),
+    ]),
+    el('p', {
+      class: 'hint item-note',
+      text: root ? `"${root.title}"의 세계관을 함께 써요. 고치려면 그 캐릭터에서 고쳐 주세요` : '원본 캐릭터를 찾을 수 없어요',
+    }),
+    el('p', { class: 'item-body', text: v ? v.text : '(원본에 아직 세계관 프롬프트가 없어요)' }),
+    v ? el('div', { class: 'item-info' }, [
+      el('span', { text: v.pinned ? '원본 확정본' : '원본 최신본' }),
+      el('span', { class: 'count', text: countLabel(field, v).text }),
+    ]) : '',
+    el('div', { class: 'item-actions' }, [
+      root ? el('button', { class: 'btn', type: 'button', text: '원본 열기', onclick: () => openProject(root) }) : '',
+      v ? el('button', { class: 'btn', type: 'button', text: '복사', onclick: () => copyText(v.text) }) : '',
+    ]),
+  ]);
+}
+
+// 결과는 있는데 이 항목만 없을 때(나중에 추가된 로어북, 사용을 새로 켠 항목 등)
+function missingItemCard(p, platformKey, field) {
+  const busy = itemBusy.has(itemKey(p.id, platformKey, field.key));
+  return el('div', { class: 'card result-card' }, [
+    el('div', { class: 'item-head' }, [el('h3', { text: fieldLabel(field) })]),
+    el('p', { class: 'hint', text: '아직 만들지 않은 항목이에요' }),
+    el('div', { class: 'item-actions' }, [
+      el('button', {
+        class: 'btn btn-primary', type: 'button', disabled: busy,
+        onclick: () => regenerateItem(p, platformKey, field.key, ''),
+      }, busy ? [el('span', { class: 'spinner spinner-sm', 'aria-hidden': 'true' }), ' 생성 중'] : '만들기'),
+    ]),
+  ]);
+}
+
+// === 설정 점검 (일관성) ===
+const ISSUE_ALIASES = [
+  [/character|캐릭터/i, 'character'],
+  [/world|세계/i, 'world'],
+  [/opening|시작|첫 ?대사/i, 'opening'],
+  [/intro|소개/i, 'intro'],
+  [/hashtag|해시|태그/i, 'hashtags'],
+  [/lore|로어|키워드/i, 'lorebook'],
+  [/user|유저|페르소나/i, 'userProfile'],
+];
+// 모델이 쓴 field를 항목 키로 맞춤. 못 맞추면 null(새 버전 버튼 없음)
+function issueFieldKey(raw, fields) {
+  const s = String(raw || '').trim();
+  const hit = fields.find((f) => f.key === s || fieldLabel(f) === s);
+  if (hit) return hit.key;
+  const alias = ISSUE_ALIASES.find(([re]) => re.test(s));
+  return alias && fields.some((f) => f.key === alias[1]) ? alias[1] : null;
+}
+
+async function checkConsistency(p, platformKey) {
+  const profile = getPlatformProfiles()[platformKey];
+  const fields = profile.fields.filter((f) => f.use);
+  const items = await Promise.all(fields.map(async (f) => {
+    const v = preferredVersion(await loadItemVersions(versionOwner(p, platformKey, f.key), platformKey, f.key));
+    return v ? `[${f.key} (${fieldLabel(f)})]\n${plainText(f.key, v.text)}` : '';
+  }));
+  const content = [
+    '[설정 시트]',
+    sheetForPrompt(p.sheet),
+    '',
+    `[${profile.name} 결과 항목]`,
+    items.filter(Boolean).join('\n\n'),
+  ].join('\n');
+  const raw = await callClaude({
+    model: 'claude-haiku-5-5',
+    system: CHECK_SYSTEM,
+    messages: [{ role: 'user', content }],
+    maxTokens: 6000,
+  });
+  return (Array.isArray(raw.issues) ? raw.issues : [])
+    .filter((x) => x && typeof x.problem === 'string' && x.problem.trim())
+    .map((x) => ({
+      field: issueFieldKey(x.field, fields),
+      problem: x.problem.trim(),
+      fix: typeof x.fix === 'string' ? x.fix.trim() : '',
+    }));
+}
+
+let checkSeq = 0;
+async function openCheck() {
+  const p = state.project;
+  const platformKey = state.activeTab;
+  if (!p || !p.sheet || !platformKey) return;
+  if (!(await hasPlatformVersions(p.id, platformKey))) { toast('먼저 결과를 만들어 주세요'); return; }
+  const seq = ++checkSeq;
+  const body = $('#checkBody');
+  $('#checkTitle').textContent = `설정 점검 · ${platformName(platformKey)}`;
+  body.replaceChildren(el('div', { class: 'loading' }, [
+    el('div', { class: 'spinner', 'aria-hidden': 'true' }),
+    el('span', { text: '설정과 결과를 비교하는 중...' }),
+  ]));
+  $('#checkModal').showModal();
+  let issues;
+  try {
+    issues = await checkConsistency(p, platformKey);
+  } catch (e) {
+    if (seq !== checkSeq) return;
+    body.replaceChildren(el('div', { class: 'error-box' }, [
+      el('p', { text: userMessage(e) }),
+      el('button', { class: 'btn btn-primary', type: 'button', text: '다시 시도', onclick: openCheck }),
+    ]));
+    return;
+  }
+  if (seq !== checkSeq) return;
+  if (!issues.length) {
+    body.replaceChildren(el('p', { class: 'empty', text: '모순을 찾지 못했어요' }));
+    return;
+  }
+  const fields = getPlatformProfiles()[platformKey].fields;
+  body.replaceChildren(...issues.map((issue) => {
+    const f = fields.find((x) => x.key === issue.field);
+    // 공유 세계관은 원본에서 고쳐야 하므로 새 버전 버튼 없음
+    const fixBtn = issue.field && issue.fix && !isSharedWorld(p, platformKey, issue.field)
+      ? el('button', {
+          class: 'btn btn-block', type: 'button', text: '이 지시로 새 버전',
+          onclick: () => {
+            fixBtn.disabled = true;
+            fixBtn.textContent = '새 버전을 만들고 있어요';
+            regenerateItem(p, platformKey, issue.field, issue.fix);
+          },
+        })
+      : '';
+    return el('div', { class: 'card issue' }, [
+      el('h3', { text: f ? fieldLabel(f) : '전체' }),
+      el('p', { text: issue.problem }),
+      issue.fix ? el('p', { class: 'fix', text: `고칠 방향: ${issue.fix}` }) : '',
+      fixBtn,
+    ]);
+  }));
+}
+
+// === 설정 모달 ===
+// 프로필 편집은 사본(profileDraft)을 고치고 "저장" 때 localStorage에 반영
+let profileDraft = null;
+let profilePick = 'zeta';
+const ACTION_MARKUPS = ['*행동*', '(행동)', '없음'];
+const POVS = ['3인칭', '2인칭', '1인칭'];
+
+function showSettingsPane(name) {
+  document.querySelectorAll('#settingsTabs .tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.pane === name)));
+  document.querySelectorAll('#settingsForm > [data-pane]').forEach((p) => { p.hidden = p.dataset.pane !== name; });
+}
+
+function optionList(values, current) {
+  return values.map((v) => el('option', { value: v, selected: v === current, text: v }));
+}
+// 빈 값·0 이하·숫자 아님 → null(제한 없음)
+const toLimit = (value) => {
+  const n = Math.floor(Number(value));
+  return value.trim() && n > 0 ? n : null;
+};
+
+function renderProfileForm() {
+  const prof = profileDraft[profilePick];
+  const fieldRows = prof.fields.map((f) => {
+    const isTags = f.key === 'hashtags';
+    const limitKey = isTags ? 'maxCount' : 'maxChars';
+    const labelInput = el('input', { class: 'field', type: 'text', 'aria-label': '칸 이름' });
+    labelInput.value = f.label;
+    labelInput.addEventListener('input', () => { f.label = labelInput.value; });
+    const limitInput = el('input', {
+      class: 'field', type: 'number', inputmode: 'numeric', min: '1', placeholder: '제한 없음',
+      'aria-label': isTags ? '최대 개수' : '최대 글자 수',
+    });
+    limitInput.value = f[limitKey] == null ? '' : String(f[limitKey]);
+    limitInput.addEventListener('input', () => { f[limitKey] = toLimit(limitInput.value); });
+    const useBox = el('input', { type: 'checkbox', checked: f.use });
+    useBox.addEventListener('change', () => { f.use = useBox.checked; });
+    return el('div', { class: 'pf-row' }, [
+      el('div', { class: 'pf-row-head' }, [
+        el('strong', { text: Object.fromEntries(RESULT_FIELDS)[f.key] }),
+        el('label', { class: 'switch' }, [useBox, '사용']),
+      ]),
+      el('div', { class: 'pf-grid' }, [
+        el('label', {}, [el('span', { class: 'pf-sub', text: '칸 이름' }), labelInput]),
+        // 로어북은 글자 수 제한 없이 사용 여부·칸 이름만
+        f.key === 'lorebook'
+          ? el('span', { class: 'pf-sub', style: 'align-self:end', text: '키워드 5~10개' })
+          : el('label', {}, [el('span', { class: 'pf-sub', text: isTags ? '최대 개수' : '최대 글자 수' }), limitInput]),
+      ]),
+    ]);
+  });
+
+  const st = prof.style;
+  const markup = el('select', { class: 'field' }, optionList(ACTION_MARKUPS, st.actionMarkup));
+  markup.addEventListener('change', () => { st.actionMarkup = markup.value; });
+  const pov = el('select', { class: 'field' }, optionList(POVS, st.pov));
+  pov.addEventListener('change', () => { st.pov = pov.value; });
+  const structured = el('input', { type: 'checkbox', checked: st.structured });
+  structured.addEventListener('change', () => { st.structured = structured.checked; });
+  const note = el('textarea', { class: 'field', rows: 3, placeholder: '예) 짧고 선명하게' });
+  note.value = st.note;
+  note.addEventListener('input', () => { st.note = note.value; });
+
+  $('#profileForm').replaceChildren(
+    ...fieldRows,
+    el('div', { class: 'pf-row' }, [
+      el('div', { class: 'pf-row-head' }, [el('strong', { text: '작성 스타일' })]),
+      el('div', { class: 'pf-grid' }, [
+        el('label', {}, [el('span', { class: 'pf-sub', text: '지시문 표기' }), markup]),
+        el('label', {}, [el('span', { class: 'pf-sub', text: '시점' }), pov]),
+      ]),
+      el('label', { class: 'switch' }, [structured, '소제목 구조로 쓰기']),
+      el('label', {}, [el('span', { class: 'pf-sub', text: '메모' }), note]),
+    ]),
+  );
+}
+
+function renderProfilePlatforms() {
+  $('#profilePlatforms').replaceChildren(...PLATFORMS.map((pf) =>
+    el('label', { class: 'chip' }, [
+      el('input', {
+        type: 'radio', name: 'profilePick', value: pf.key, checked: pf.key === profilePick,
+        onchange: () => { profilePick = pf.key; renderProfileForm(); },
+      }),
+      el('span', { text: pf.name }),
+    ])
+  ));
+}
+
+function openSettings() {
+  const input = $('#apiKeyInput');
+  input.value = lsGet(LS_API_KEY) || '';
+  input.type = 'password';
+  $('#toggleKeyBtn').textContent = '보기';
+  $('#ghTokenInput').value = lsGet(LS_GH_TOKEN) || '';
+  renderSyncStatus();
+  profileDraft = structuredClone(getPlatformProfiles());
+  renderProfilePlatforms();
+  renderProfileForm();
+  showSettingsPane('key');
+  $('#settingsModal').showModal();
+}
+// 토큰이 바뀌면 다른 계정일 수 있으므로 찾아 둔 Gist id를 지움
+function saveGhToken() {
+  const token = $('#ghTokenInput').value.trim();
+  if (token === (lsGet(LS_GH_TOKEN) || '')) return;
+  lsSet(LS_GH_TOKEN, token);
+  try { localStorage.removeItem(LS_GIST_ID); } catch { /* 무시 */ }
+}
+function bindSettings() {
+  const modal = $('#settingsModal');
+  $('#settingsBtn').addEventListener('click', openSettings);
+  $('#cancelSettingsBtn').addEventListener('click', () => modal.close());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+  document.querySelectorAll('#settingsTabs .tab').forEach((t) =>
+    t.addEventListener('click', () => showSettingsPane(t.dataset.pane)));
+  $('#toggleKeyBtn').addEventListener('click', () => {
+    const input = $('#apiKeyInput');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    $('#toggleKeyBtn').textContent = show ? '숨기기' : '보기';
+  });
+  $('#resetProfileBtn').addEventListener('click', () => {
+    profileDraft[profilePick] = structuredClone(PLATFORM_PROFILES[profilePick]);
+    renderProfileForm();
+    toast(`${platformName(profilePick)} 프로필을 기본값으로 바꿨어요. 저장을 눌러야 반영돼요`);
+  });
+  $('#syncNowBtn').addEventListener('click', async () => {
+    saveGhToken();
+    const btn = $('#syncNowBtn');
+    btn.disabled = true;
+    btn.textContent = '동기화하는 중...';
+    await syncNow();
+    btn.disabled = false;
+    btn.textContent = '지금 동기화';
+  });
+  $('#settingsForm').addEventListener('submit', () => {
+    saveGhToken();
+    const keyOk = lsSet(LS_API_KEY, $('#apiKeyInput').value.trim());
+    const profOk = lsSet(LS_PROFILES, JSON.stringify(profileDraft));
+    toast(keyOk && profOk ? '저장했어요' : '이 브라우저에서는 저장이 안 돼요');
+    if (currentScreen() === 'result') renderResult();
+  });
+}
+
+// === 시작 ===
+async function init() {
+  renderInput();
+  bindSettings();
+
+  $('#newBtn').addEventListener('click', () => { resetInput(); go('input'); });
+  $('#toSheetBtn').addEventListener('click', async () => {
+    const btn = $('#toSheetBtn');
+    btn.disabled = true;
+    cancelDraftSave();
+    const saved = await saveProjectFromInput();
+    btn.disabled = state.platforms.size === 0;
+    if (!saved) toast('이 브라우저에서는 저장이 안 돼요');
+    if (!state.project.sheet) runBuildSheet(); // API 호출 전에 프로젝트는 이미 저장됨
+    go('sheet');
+  });
+  $('#rawInput').addEventListener('input', scheduleDraftSave);
+  $('#userRole').addEventListener('input', scheduleDraftSave);
+  // 임시저장: 설정 시트는 만들지 않고 입력값만 프로젝트로 저장. 홈에서 열면 입력 화면으로 돌아옴
+  $('#draftBtn').addEventListener('click', async () => {
+    if (!$('#rawInput').value.trim()) { toast('아이디어를 먼저 적어 주세요'); return; }
+    cancelDraftSave();
+    const saved = await saveProjectFromInput();
+    toast(saved ? '임시저장했어요' : '이 브라우저에서는 저장이 안 돼요');
+  });
+  document.addEventListener('click', () => { closeCardMenus(); $('#homeMenu').hidden = true; });
+  $('#homeMenuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeCardMenus();
+    $('#homeMenu').hidden = !$('#homeMenu').hidden;
+  });
+  $('#homeSyncBtn').addEventListener('click', () => { $('#homeMenu').hidden = true; syncNow(); });
+  $('#backupBtn').addEventListener('click', () => { $('#homeMenu').hidden = true; backupAll(); });
+  $('#restoreBtn').addEventListener('click', () => { $('#homeMenu').hidden = true; $('#restoreInput').click(); });
+  $('#restoreInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    e.target.value = ''; // 같은 파일을 다시 골라도 change가 나도록
+    if (file) restoreBackup(file);
+  });
+  $('#backupBanner').addEventListener('click', backupAll);
+  $('#toResultBtn').addEventListener('click', startGeneration);
+  $('#saveProjectBtn').addEventListener('click', saveCurrentProject);
+  $('#copyAllBtn').addEventListener('click', copyAllPinned);
+  $('#checkBtn').addEventListener('click', openCheck);
+  $('#closeCheckBtn').addEventListener('click', () => $('#checkModal').close());
+  $('#checkModal').addEventListener('click', (e) => { if (e.target === $('#checkModal')) $('#checkModal').close(); });
+  $('#backBtn').addEventListener('click', () => go(SCREENS[currentScreen()].parent));
+
+  try {
+    await db.open();
+  } catch {
+    $('#dbBanner').hidden = false;
+  }
+
+  window.addEventListener('hashchange', () => { flushDraftSave(); flushSheetSave(); showScreen(); });
+  window.addEventListener('pagehide', () => { flushDraftSave(); flushSheetSave(); });
+  showScreen();
+  autoSync(); // 홈이 아닌 화면으로 열려도 앱을 열 때 한 번
+}
+init();
+</script>
+</body>
+</html>

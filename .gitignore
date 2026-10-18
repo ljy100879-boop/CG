@@ -1,0 +1,4 @@
+# 공개 저장소(GitHub Pages)에는 앱 파일만 올림. 기획 문서·테스트·스크린샷은 제외
+*
+!index.html
+!.gitignore
